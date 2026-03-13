@@ -462,6 +462,11 @@
           "win"
         ]
       },
+	  "win-arm": {
+        "#import": [
+          "win"
+        ]
+      },
       "win-x64": {
         "#import": [
           "win"

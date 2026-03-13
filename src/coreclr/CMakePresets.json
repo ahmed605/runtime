@@ -114,6 +114,17 @@
         "CLR_CMAKE_HOST_ARCH": "arm64"
       }
     },
+	{
+      "name": "ARM",
+      "hidden": true,
+      "architecture": {
+        "value": "arm",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "CLR_CMAKE_HOST_ARCH": "arm"
+      }
+    },
     {
       "name": "windows.x64.Debug",
       "displayName": "windows.x64.Debug",
@@ -193,6 +204,33 @@
         "windows-base",
         "Checked",
         "ARM64"
+      ]
+    },
+	{
+      "name": "windows.arm.Debug",
+      "displayName": "windows.arm.Debug",
+      "inherits": [
+        "windows-base",
+        "Debug",
+        "ARM"
+      ]
+    },
+    {
+      "name": "windows.arm.Release",
+      "displayName": "windows.arm.Release",
+      "inherits": [
+        "windows-base",
+        "Release",
+        "ARM"
+      ]
+    },
+    {
+      "name": "windows.arm.Checked",
+      "displayName": "windows.arm.Checked",
+      "inherits": [
+        "windows-base",
+        "Checked",
+        "ARM"
       ]
     },
     {

@@ -4335,6 +4335,17 @@
         "win-arm64"
       ]
     },
+	"win-arm": {
+      "#import": [
+        "win"
+      ]
+    },
+    "win-arm-aot": {
+      "#import": [
+        "win-aot",
+        "win-arm"
+      ]
+    },
     "win-x64": {
       "#import": [
         "win"

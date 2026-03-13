@@ -101,6 +101,9 @@
     <OfficialBuildRID Include="win-arm64">
       <Platform>arm64</Platform>
     </OfficialBuildRID>
+	<OfficialBuildRID Include="win-arm">
+      <Platform>arm</Platform>
+    </OfficialBuildRID>
   </ItemGroup>
   <ItemGroup>
     <!-- Ensure we have a RID-specific package for the current build, even if it isn't in our official set, but

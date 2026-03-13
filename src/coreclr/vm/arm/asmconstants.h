@@ -194,6 +194,9 @@ ASMCONSTANTS_C_ASSERT(CallCountingStubData__RemainingCallCountCell == offsetof(C
 #define CallCountingStubData__TargetForMethod 0x04
 ASMCONSTANTS_C_ASSERT(CallCountingStubData__TargetForMethod == offsetof(CallCountingStubData, TargetForMethod))
 
+#define OFFSETOF__InterfaceDispatchCache__m_rgEntries 0x20
+ASMCONSTANTS_C_ASSERT(OFFSETOF__InterfaceDispatchCache__m_rgEntries == offsetof(InterfaceDispatchCache, m_rgEntries))
+
 #define CallCountingStubData__TargetForThresholdReached 0x08
 ASMCONSTANTS_C_ASSERT(CallCountingStubData__TargetForThresholdReached == offsetof(CallCountingStubData, TargetForThresholdReached))
 #endif // FEATURE_TIERED_COMPILATION

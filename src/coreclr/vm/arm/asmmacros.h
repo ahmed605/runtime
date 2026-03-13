@@ -113,13 +113,14 @@ __PWTB_StackAlloc SETA __PWTB_TransitionBlock
 
         ; Spill callee saved registers and return address.
         PROLOG_PUSH         {r4-r11,lr}
+		PROLOG_STACK_SAVE r7
 
         ; Allocate space for the rest of the frame
         PROLOG_STACK_ALLOC  __PWTB_StackAlloc
 
         IF __PWTB_SaveFPArgs
         add         r6, sp, #(__PWTB_FloatArgumentRegisters)
-        vstm        r6, {s0-s15}
+        vstm        r6, {d0-d7}
         ENDIF
 
         CHECK_STACK_ALIGNMENT
@@ -134,7 +135,7 @@ __PWTB_StackAlloc SETA __PWTB_TransitionBlock
 
         IF __PWTB_SaveFPArgs
         add         r6, sp, #(__PWTB_FloatArgumentRegisters)
-        vldm        r6, {s0-s15}
+        vldm        r6, {d0-d7}
         ENDIF
 
         EPILOG_STACK_FREE   __PWTB_StackAlloc

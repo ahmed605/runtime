@@ -103,7 +103,7 @@ HRESULT SetThreadDescriptionDummy(HANDLE hThread, PCWSTR lpThreadDescription)
 
 HRESULT WINAPI InitializeSetThreadDescription(HANDLE hThread, PCWSTR lpThreadDescription)
 {
-    HMODULE hKernel32 = WszLoadLibrary(W("kernel32.dll"));
+    HMODULE hKernel32 = WszLoadLibrary(W("kernelbase.dll"));
 
     pfnSetThreadDescription pLocal = NULL;
     if (hKernel32 != NULL)

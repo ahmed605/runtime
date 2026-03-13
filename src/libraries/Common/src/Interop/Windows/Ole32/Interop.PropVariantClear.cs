@@ -8,7 +8,7 @@ internal static partial class Interop
 {
     internal static partial class Ole32
     {
-        [LibraryImport(Interop.Libraries.Ole32)]
+        [LibraryImport(Interop.Libraries.Combase)]
         internal static partial void PropVariantClear(IntPtr pObject);
     }
 }

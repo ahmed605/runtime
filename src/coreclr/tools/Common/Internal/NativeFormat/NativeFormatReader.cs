@@ -9,6 +9,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Internal.NativeFormat
 {
@@ -214,6 +215,12 @@ namespace Internal.NativeFormat
         }
     }
 
+    internal static unsafe partial class NativeReaderKernel32
+    {
+        [DllImport("kernelbase.dll", EntryPoint = "OutputDebugStringW", ExactSpelling = true)]
+        internal static extern void OutputDebugString(char* message);
+    }
+
     internal sealed unsafe partial class NativeReader
     {
         private readonly byte* _base;
@@ -262,7 +269,15 @@ namespace Internal.NativeFormat
         private uint EnsureOffsetInRange(uint offset, uint lookAhead)
         {
             if ((int)offset < 0 || offset + lookAhead >= _size)
+            {
+                fixed (char* c = $"[EnsureOffsetInRange] ThrowBadImageFormatException: offset = {offset}, lookAhead = {lookAhead}, size = {_size}, base = 0x{((long)(nuint)_base):X8}\r\n")
+                {
+                    NativeReaderKernel32.OutputDebugString(c);
+                }
+
                 ThrowBadImageFormatException();
+            }
+
             return offset;
         }
 

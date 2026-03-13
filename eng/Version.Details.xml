@@ -29,6 +29,10 @@
       <Uri>https://github.com/dotnet/llvm-project</Uri>
       <Sha>a504aeb8ef551dbd01b94df9af22f4cfa2bf90d9</Sha>
     </Dependency>
+	<Dependency Name="runtime.win-arm.Microsoft.NETCore.Runtime.JIT.Tools" Version="19.1.0-alpha.1.25574.1">
+      <Uri>https://github.com/dotnet/llvm-project</Uri>
+      <Sha>a504aeb8ef551dbd01b94df9af22f4cfa2bf90d9</Sha>
+    </Dependency>
     <Dependency Name="runtime.win-x64.Microsoft.NETCore.Runtime.JIT.Tools" Version="19.1.0-alpha.1.25574.1">
       <Uri>https://github.com/dotnet/llvm-project</Uri>
       <Sha>a504aeb8ef551dbd01b94df9af22f4cfa2bf90d9</Sha>

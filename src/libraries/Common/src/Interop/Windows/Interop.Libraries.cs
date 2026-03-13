@@ -16,7 +16,7 @@ internal static partial class Interop
         internal const string Gdi32 = "gdi32.dll";
         internal const string HttpApi = "httpapi.dll";
         internal const string IpHlpApi = "iphlpapi.dll";
-        internal const string Kernel32 = "kernel32.dll";
+        internal const string Kernel32 = "kernelbase.dll";
         internal const string Logoncli = "logoncli.dll";
         internal const string Mswsock = "mswsock.dll";
         internal const string NCrypt = "ncrypt.dll";
@@ -24,6 +24,7 @@ internal static partial class Interop
         internal const string Netutils = "netutils.dll";
         internal const string NtDll = "ntdll.dll";
         internal const string Odbc32 = "odbc32.dll";
+        internal const string Combase = "combase.dll";
         internal const string Ole32 = "ole32.dll";
         internal const string OleAut32 = "oleaut32.dll";
         internal const string Pdh = "pdh.dll";

@@ -706,6 +706,21 @@ elseif(CLR_CMAKE_TARGET_WIN32)
         set(VM_HEADERS_WKS_ARCH_ASM
             ${ARCH_SOURCES_DIR}/asmconstants.h
         )
+	elseif(CLR_CMAKE_TARGET_ARCH_ARM)
+        set(VM_SOURCES_WKS_ARCH_ASM
+            ${ARCH_SOURCES_DIR}/AllocSlow.asm
+            ${ARCH_SOURCES_DIR}/asmhelpers.asm
+            ${ARCH_SOURCES_DIR}/ehhelpers.asm
+            ${ARCH_SOURCES_DIR}/patchedcode.asm
+            ${ARCH_SOURCES_DIR}/pinvokestubs.asm
+            ${ARCH_SOURCES_DIR}/thunktemplates.asm
+            ${RUNTIME_DIR}/${ARCH_SOURCES_DIR}/AllocFast.asm
+            ${RUNTIME_DIR}/${ARCH_SOURCES_DIR}/WriteBarriers.asm
+        )
+
+		set(VM_HEADERS_WKS_ARCH_ASM
+            ${ARCH_SOURCES_DIR}/asmconstants.h
+        )
     endif()
 
     set(ASM_SUFFIX asm)

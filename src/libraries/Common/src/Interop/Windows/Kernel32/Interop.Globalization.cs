@@ -47,13 +47,13 @@ internal static partial class Interop
         internal const string LOCALE_NAME_USER_DEFAULT = null;
         internal const string LOCALE_NAME_SYSTEM_DEFAULT = "!x-sys-default-locale";
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         internal static unsafe partial int LCIDToLocaleName(int locale, char* pLocaleName, int cchName, uint dwFlags);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         internal static partial int LocaleNameToLCID(string lpName, uint dwFlags);
 
-        [LibraryImport("kernel32.dll",  SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll",  SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
         internal static unsafe partial int LCMapStringEx(
                     string? lpLocaleName,
                     uint dwMapFlags,
@@ -65,7 +65,7 @@ internal static partial class Interop
                     void* lpReserved,
                     IntPtr sortHandle);
 
-        [LibraryImport("kernel32.dll", EntryPoint = "FindNLSStringEx", SetLastError = SetLastErrorForDebug)]
+        [LibraryImport("kernelbase.dll", EntryPoint = "FindNLSStringEx", SetLastError = SetLastErrorForDebug)]
         internal static unsafe partial int FindNLSStringEx(
                     char* lpLocaleName,
                     uint dwFindNLSStringFlags,
@@ -78,7 +78,7 @@ internal static partial class Interop
                     void* lpReserved,
                     IntPtr sortHandle);
 
-        [LibraryImport("kernel32.dll", EntryPoint = "CompareStringEx")]
+        [LibraryImport("kernelbase.dll", EntryPoint = "CompareStringEx")]
         internal static unsafe partial int CompareStringEx(
                     char* lpLocaleName,
                     uint dwCmpFlags,
@@ -90,7 +90,7 @@ internal static partial class Interop
                     void* lpReserved,
                     IntPtr lParam);
 
-        [LibraryImport("kernel32.dll", EntryPoint = "CompareStringOrdinal")]
+        [LibraryImport("kernelbase.dll", EntryPoint = "CompareStringOrdinal")]
         internal static unsafe partial int CompareStringOrdinal(
                     char* lpString1,
                     int cchCount1,
@@ -98,7 +98,7 @@ internal static partial class Interop
                     int cchCount2,
                     [MarshalAs(UnmanagedType.Bool)] bool bIgnoreCase);
 
-        [LibraryImport("kernel32.dll", EntryPoint = "FindStringOrdinal", SetLastError = SetLastErrorForDebug)]
+        [LibraryImport("kernelbase.dll", EntryPoint = "FindStringOrdinal", SetLastError = SetLastErrorForDebug)]
         internal static unsafe partial int FindStringOrdinal(
                     uint dwFindStringOrdinalFlags,
                     char* lpStringSource,
@@ -107,7 +107,7 @@ internal static partial class Interop
                     int cchValue,
                     BOOL bIgnoreCase);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static unsafe partial bool IsNLSDefinedString(
                     int Function,
@@ -116,33 +116,33 @@ internal static partial class Interop
                     char* lpString,
                     int cchStr);
 
-        [LibraryImport("kernel32.dll")]
+        [LibraryImport("kernelbase.dll")]
         internal static unsafe partial BOOL GetUserPreferredUILanguages(uint dwFlags, uint* pulNumLanguages, char* pwszLanguagesBuffer, uint* pcchLanguagesBuffer);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         internal static unsafe partial int GetLocaleInfoEx(string lpLocaleName, uint LCType, void* lpLCData, int cchData);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static unsafe partial bool EnumSystemLocalesEx(delegate* unmanaged<char*, uint, void*, BOOL> lpLocaleEnumProcEx, uint dwFlags, void* lParam, IntPtr reserved);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static unsafe partial bool EnumTimeFormatsEx(delegate* unmanaged<char*, void*, BOOL> lpTimeFmtEnumProcEx, string lpLocaleName, uint dwFlags, void* lParam);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         internal static partial int GetCalendarInfoEx(string? lpLocaleName, uint Calendar, IntPtr lpReserved, uint CalType, IntPtr lpCalData, int cchData, out int lpValue);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         internal static partial int GetCalendarInfoEx(string? lpLocaleName, uint Calendar, IntPtr lpReserved, uint CalType, IntPtr lpCalData, int cchData, IntPtr lpValue);
 
-        [LibraryImport("kernel32.dll")]
+        [LibraryImport("kernelbase.dll")]
         internal static partial int GetUserGeoID(int geoClass);
 
-        [LibraryImport("kernel32.dll", EntryPoint = "GetGeoInfoW")]
+        [LibraryImport("kernelbase.dll", EntryPoint = "GetGeoInfoW")]
         internal static unsafe partial int GetGeoInfo(int location, int geoType, char* lpGeoData, int cchData, int LangId);
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static unsafe partial bool EnumCalendarInfoExEx(delegate* unmanaged<char*, uint, IntPtr, void*, BOOL> pCalInfoEnumProcExEx, string lpLocaleName, uint Calendar, string? lpReserved, uint CalType, void* lParam);
 
@@ -156,7 +156,7 @@ internal static partial class Interop
             internal Guid guidCustomVersion;
         }
 
-        [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+        [LibraryImport("kernelbase.dll", StringMarshalling = StringMarshalling.Utf16)]
         [return: MarshalAs(UnmanagedType.Bool)]
         internal static unsafe partial bool GetNLSVersionEx(int function, string localeName, NlsVersionInfoEx* lpVersionInformation);
     }

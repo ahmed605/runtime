@@ -5,6 +5,10 @@
 #include <arm64intr.h>
 #endif
 
+#if defined(HOST_ARM)
+#include <armintr.h>
+#endif
+
 // Implementation of NativeAOT PAL inline functions
 
 EXTERN_C long __cdecl _InterlockedIncrement(long volatile *);
@@ -162,6 +166,21 @@ EXTERN_C void _mm_pause();
 EXTERN_C void __faststorefence();
 #pragma intrinsic(__faststorefence)
 #define PalMemoryBarrier() __faststorefence()
+
+
+#elif defined(HOST_ARM)
+
+EXTERN_C void __yield(void);
+#pragma intrinsic(__yield)
+EXTERN_C void __dmb(unsigned int _Type);
+#pragma intrinsic(__dmb)
+FORCEINLINE void PalYieldProcessor()
+{
+    __dmb(0xA /* _ARM_BARRIER_ISHST */);
+    __yield();
+}
+
+#define PalMemoryBarrier() __dmb(0xF /* _ARM_BARRIER_SY */)
 
 #elif defined(HOST_ARM64)
 

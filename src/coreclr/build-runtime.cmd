@@ -390,6 +390,7 @@ if %__BuildNative% EQU 1 (
     ) else (
         set __VCBuildArch=amd64
         if /i "%__HostArch%" == "x86" ( set __VCBuildArch=amd64_x86 )
+        if /i "%__HostArch%" == "arm" ( set __VCBuildArch=amd64_arm )
         if /i "%__HostArch%" == "arm64" ( set __VCBuildArch=amd64_arm64 )
     )
 

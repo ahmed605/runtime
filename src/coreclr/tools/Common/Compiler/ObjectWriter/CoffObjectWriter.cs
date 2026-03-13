@@ -190,14 +190,20 @@ namespace ILCompiler.ObjectWriter
             Utf8String symbolName,
             long addend)
         {
-            if (relocType is IMAGE_REL_BASED_RELPTR32)
+            fixed (byte* pData = data)
             {
-                addend += 4;
-            }
+                if (relocType is IMAGE_REL_BASED_RELPTR32)
+                {
+                    addend += 4;
+                }
 
-            if (addend != 0)
-            {
-                fixed (byte* pData = data)
+                /*if (_machine == Machine.ArmThumb2 && (relocType is IMAGE_REL_BASED_ADDR32NB))
+                {
+                    long inlineValue = Relocation.ReadValue(relocType, (void*)pData);
+                    long finalValue = inlineValue + addend;
+                    Relocation.WriteValue(relocType, (void*)pData, (finalValue & 1) != 0 ? finalValue : finalValue | 1);
+                }
+                else*/ if (addend != 0)
                 {
                     long inlineValue = Relocation.ReadValue(relocType, (void*)pData);
                     Relocation.WriteValue(relocType, (void*)pData, inlineValue + addend);
@@ -238,6 +244,10 @@ namespace ILCompiler.ObjectWriter
                 }
             }
 
+            //bool useArmThunks = _machine is Machine.ArmThumb2 && undefinedSymbols.Count > 0;
+            //int thunkSectionIndex = useArmThunks ? GetOrCreateSection(ArmTextThunkSection).SectionIndex : 0;
+            //int thunkSymbolsIndex = 0;
+
             foreach (var symbolName in undefinedSymbols)
             {
                 _symbolNameToIndex.Add(symbolName, (uint)_symbols.Count);
@@ -246,6 +256,19 @@ namespace ILCompiler.ObjectWriter
                     Name = symbolName,
                     StorageClass = CoffSymbolClass.IMAGE_SYM_CLASS_EXTERNAL,
                 });
+
+                /*if (useArmThunks)
+                {
+                    _symbols.Add(new CoffSymbol
+                    {
+                        Name = $"{symbolName}$thunk",
+                        Value = (ulong)((thunkSymbolsIndex * 4) | 1u),
+                        Section = _sections[thunkSectionIndex],
+                        Info = (byte)(STT_FUNC | (STB_GLOBAL << 4)),
+                        Other = STV_HIDDEN,
+                    });
+                    thunkSymbolsIndex++;
+                }*/
             }
 
             if (_options.HasFlag(ObjectWritingOptions.ControlFlowGuard))
@@ -362,6 +385,31 @@ namespace ILCompiler.ObjectWriter
                                     IMAGE_REL_ARM64_TLS_SECREL_LOW12A => IMAGE_REL_ARM64_SECREL_LOW12A,
                                     IMAGE_REL_SECREL => IMAGE_REL_ARM64_SECREL,
                                     IMAGE_REL_SECTION => IMAGE_REL_ARM64_SECTION,
+                                    _ => throw new NotSupportedException($"Unsupported relocation: {relocation.Type}")
+                                },
+                            });
+                        }
+                        break;
+
+                    case Machine.ArmThumb2:
+                        foreach (var relocation in relocationList)
+                        {
+                            coffRelocations.Add(new CoffRelocation
+                            {
+                                VirtualAddress = (uint)relocation.Offset,
+                                SymbolTableIndex = _symbolNameToIndex[relocation.SymbolName],
+                                Type = relocation.Type switch
+                                {
+                                    IMAGE_REL_BASED_ABSOLUTE => IMAGE_REL_ARM_ADDR32NB,
+                                    IMAGE_REL_BASED_ADDR32NB => IMAGE_REL_ARM_ADDR32NB,
+                                    IMAGE_REL_BASED_HIGHLOW => IMAGE_REL_ARM_ADDR32,
+                                    IMAGE_REL_BASED_RELPTR32 => IMAGE_REL_ARM_REL32,
+                                    IMAGE_REL_BASED_REL32 => IMAGE_REL_ARM_REL32,
+                                    IMAGE_REL_BASED_THUMB_MOV32 => IMAGE_REL_THUMB_MOV32,
+                                    //IMAGE_REL_BASED_THUMB_MOV32_PCREL => IMAGE_REL_THUMB_MOV32,
+                                    IMAGE_REL_BASED_THUMB_BRANCH24 => IMAGE_REL_THUMB_BRANCH24,
+                                    IMAGE_REL_SECREL => IMAGE_REL_ARM_SECREL,
+                                    IMAGE_REL_SECTION => IMAGE_REL_ARM_SECTION,
                                     _ => throw new NotSupportedException($"Unsupported relocation: {relocation.Type}")
                                 },
                             });
@@ -677,6 +725,16 @@ namespace ILCompiler.ObjectWriter
             IMAGE_REL_AMD64_SREL32 = 14,
             IMAGE_REL_AMD64_PAIR = 15,
             IMAGE_REL_AMD64_SSPAN32 = 16,
+
+            IMAGE_REL_ARM_ABSOLUTE = 0,
+            IMAGE_REL_ARM_ADDR32 = 1,
+            IMAGE_REL_ARM_ADDR32NB = 2,
+            IMAGE_REL_ARM_REL32 = 10,
+            IMAGE_REL_ARM_SECTION = 14,
+            IMAGE_REL_ARM_SECREL = 15,
+            IMAGE_REL_THUMB_MOV32 = 17,
+            IMAGE_REL_THUMB_BRANCH24 = 20,
+            IMAGE_REL_THUMB_BLX23 = 21,
 
             IMAGE_REL_ARM64_ABSOLUTE = 0,
             IMAGE_REL_ARM64_ADDR32 = 1,

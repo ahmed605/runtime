@@ -200,6 +200,9 @@ EXTERN_C unsigned __int64  __readgsqword(unsigned long Offset);
 #elif defined(HOST_ARM64)
 EXTERN_C unsigned __int64 __getReg(int);
 #pragma intrinsic(__getReg)
+#elif defined(HOST_ARM)
+EXTERN_C unsigned int _MoveFromCoprocessor(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int);
+#pragma intrinsic(_MoveFromCoprocessor)
 #else
 #error Unsupported architecture
 #endif
@@ -213,6 +216,8 @@ inline uint8_t * PalNtCurrentTeb()
     return (uint8_t*)__readgsqword(0x30);
 #elif defined(HOST_ARM64)
     return (uint8_t*)__getReg(18);
+#elif defined(HOST_ARM)
+    return (uint8_t*)(ULONG_PTR)_MoveFromCoprocessor(15, 0, 13, 0, 2);
 #else
 #error Unsupported architecture
 #endif

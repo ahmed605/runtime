@@ -86,6 +86,11 @@ static HMODULE LoadKernel32dll()
     return LoadLibraryExW(L"kernel32", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 }
 
+static HMODULE LoadKernelBasedll()
+{
+    return LoadLibraryExW(L"kernelbase", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+}
+
 static HMODULE LoadNtdlldll()
 {
     return LoadLibraryExW(L"ntdll.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
@@ -468,7 +473,7 @@ NATIVE_CONTEXT* PalAllocateCompleteOSContext(_Out_ uint8_t** contextBuffer)
 
     if (pfnInitializeContext2 == NULL)
     {
-        HMODULE hm = GetModuleHandleW(_T("kernel32.dll"));
+        HMODULE hm = GetModuleHandleW(_T("kernelbase.dll"));
         if (hm != NULL)
         {
             pfnInitializeContext2 = (PINITIALIZECONTEXT2)GetProcAddress(hm, "InitializeContext2");
@@ -478,7 +483,7 @@ NATIVE_CONTEXT* PalAllocateCompleteOSContext(_Out_ uint8_t** contextBuffer)
 #if defined(TARGET_ARM64)
     if (pfnGetEnabledXStateFeatures == NULL)
     {
-        HMODULE hm = GetModuleHandleW(_T("kernel32.dll"));
+        HMODULE hm = GetModuleHandleW(_T("kernelbase.dll"));
         if (hm != NULL)
         {
             pfnGetEnabledXStateFeatures = (PGETENABLEDXSTATEFEATURES)GetProcAddress(hm, "GetEnabledXStateFeatures");
@@ -582,7 +587,7 @@ _Success_(return) bool PalGetCompleteThreadContext(HANDLE hThread, _Out_ NATIVE_
 #if defined(TARGET_ARM64)
     if (pfnSetXStateFeaturesMask == NULL)
     {
-        HMODULE hm = GetModuleHandleW(_T("kernel32.dll"));
+        HMODULE hm = GetModuleHandleW(_T("kernelbase.dll"));
         if (hm != NULL)
         {
             pfnSetXStateFeaturesMask = (PSETXSTATEFEATURESMASK)GetProcAddress(hm, "SetXStateFeaturesMask");
@@ -681,7 +686,7 @@ static void NTAPI ActivationHandler(ULONG_PTR parameter)
 
 void InitHijackingAPIs()
 {
-    HMODULE hKernel32 = LoadKernel32dll();
+    HMODULE hKernel32 = LoadKernelBasedll();
 
 #ifdef HOST_AMD64
     typedef BOOL (WINAPI *IsWow64Process2Proc)(HANDLE hProcess, USHORT *pProcessMachine, USHORT *pNativeMachine);
@@ -873,7 +878,7 @@ bool PalSetCurrentThreadNameW(const WCHAR* name)
 {
     if (g_pfnSetThreadDescription == SET_THREAD_DESCRIPTION_UNINITIALIZED)
     {
-        HMODULE hKernel32 = LoadKernel32dll();
+        HMODULE hKernel32 = LoadKernelBasedll();
         g_pfnSetThreadDescription = (pfnSetThreadDescription)GetProcAddress(hKernel32, "SetThreadDescription");
     }
     if (!g_pfnSetThreadDescription)

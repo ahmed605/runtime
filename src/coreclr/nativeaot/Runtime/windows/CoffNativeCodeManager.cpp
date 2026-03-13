@@ -144,8 +144,7 @@ static PTR_VOID GetUnwindDataBlob(TADDR moduleBase, PTR_RUNTIME_FUNCTION pRuntim
     *pSize = sizeof(UNWIND_INFO);
 
     return pUnwindInfo;
-
-#elif defined(TARGET_ARM64)
+#elif defined(TARGET_ARM) || defined(TARGET_ARM64)
 
     // if this function uses packed unwind data then at least one of the two least significant bits
     // will be non-zero.  if this is the case then there will be no xdata record to enumerate.
@@ -155,9 +154,15 @@ static PTR_VOID GetUnwindDataBlob(TADDR moduleBase, PTR_RUNTIME_FUNCTION pRuntim
     PTR_uint32_t xdata = dac_cast<PTR_uint32_t>(pRuntimeFunction->UnwindData + moduleBase);
     int size = 4;
 
-    // See https://learn.microsoft.com/cpp/build/arm64-exception-handling
+#if defined(TARGET_ARM)
+    // See https://docs.microsoft.com/en-us/cpp/build/arm-exception-handling
+    int unwindWords = xdata[0] >> 28;
+    int epilogScopes = (xdata[0] >> 23) & 0x1f;
+#else
+    // See https://docs.microsoft.com/en-us/cpp/build/arm64-exception-handling
     int unwindWords = xdata[0] >> 27;
     int epilogScopes = (xdata[0] >> 22) & 0x1f;
+#endif
 
     if (unwindWords == 0 && epilogScopes == 0)
     {
@@ -206,6 +211,10 @@ static int LookupUnwindInfoForMethod(uint32_t relativePc,
                                      int low,
                                      int high)
 {
+#ifdef TARGET_ARM
+    relativePc |= THUMB_CODE;
+#endif 
+
     // Binary search the RUNTIME_FUNCTION table
     // Use linear search once we get down to a small number of elements
     // to avoid Binary search overhead.
@@ -590,14 +599,18 @@ uintptr_t CoffNativeCodeManager::GetConservativeUpperBoundForOutgoingArgs(Method
             upperBound = dac_cast<TADDR>(pRegisterSet->GetFP() - ((PTR_UNWIND_INFO) pUnwindDataBlob)->FrameOffset);
         }
 
-#elif defined(TARGET_ARM64)
+#elif defined(TARGET_ARM) || defined(TARGET_ARM64)
         // Unwind the current method context to get the caller's stack pointer
         // and use it as the upper bound for the callee
         SIZE_T  EstablisherFrame;
         PVOID   HandlerData;
         CONTEXT context;
         context.Sp = pRegisterSet->GetSP();
+#if defined(TARGET_ARM64)
         context.Fp = pRegisterSet->GetFP();
+#else
+        context.R11 = pRegisterSet->GetFP();
+#endif
         context.Pc = pRegisterSet->GetIP();
 
         RtlVirtualUnwind(NULL,
@@ -606,7 +619,7 @@ uintptr_t CoffNativeCodeManager::GetConservativeUpperBoundForOutgoingArgs(Method
                         (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
                         &context,
                         &HandlerData,
-                        &EstablisherFrame,
+                        (PDWORD)&EstablisherFrame,
                         NULL);
 
         upperBound = dac_cast<TADDR>(context.Sp);
@@ -738,7 +751,12 @@ bool CoffNativeCodeManager::UnwindStackFrame(MethodInfo *    pMethodInfo,
         F(X19, pX19) F(X20, pX20) F(X21, pX21) F(X22, pX22) F(X23, pX23) F(X24, pX24) \
         F(X25, pX25) F(X26, pX26) F(X27, pX27) F(X28, pX28) F(Fp, pFP) F(Lr, pLR)
     #define WORDPTR PDWORD64
-#endif // defined(TARGET_X86)
+#elif defined(TARGET_ARM)
+	#define FOR_EACH_NONVOLATILE_REGISTER(F) \
+        F(R4, pR4) F(R5, pR5) F(R6, pR6) F(R7, pR7) F(R8, pR8) F(R9, pR9) F(R10, pR10) \
+		F(R11, pR11) F(Lr, pLR)
+    #define WORDPTR PDWORD
+#endif
 
 #define REGDISPLAY_TO_CONTEXT(contextField, regDisplayField) \
     contextPointers.contextField = (WORDPTR) pRegisterSet->regDisplayField; \
@@ -812,6 +830,37 @@ bool CoffNativeCodeManager::UnwindStackFrame(MethodInfo *    pMethodInfo,
             pRegisterSet->D[i - 8] = context.V[i].Low;
     }
 #endif
+#if defined(TARGET_ARM)
+    if (!(flags & USFF_GcUnwind))
+    {
+        for (int i = 8; i < 16; i++)
+            context.D[i] = pRegisterSet->D[i - 8];
+    }
+
+    context.Sp = pRegisterSet->SP;
+    context.Pc = pRegisterSet->IP;
+
+    DWORD  EstablisherFrame;
+    PVOID   HandlerData;
+
+    RtlVirtualUnwind(NULL,
+                    dac_cast<TADDR>(m_moduleBase),
+                    pRegisterSet->IP,
+                    (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
+                    &context,
+                    &HandlerData,
+                    &EstablisherFrame,
+                    &contextPointers);
+
+    pRegisterSet->SP = context.Sp;
+    pRegisterSet->IP = context.Pc;
+
+    if (!(flags & USFF_GcUnwind))
+    {
+        for (int i = 8; i < 16; i++)
+            pRegisterSet->D[i - 8] = context.D[i];
+    }
+#endif
 
     FOR_EACH_NONVOLATILE_REGISTER(CONTEXT_TO_REGDISPLAY);
 
@@ -852,6 +901,10 @@ bool CoffNativeCodeManager::GetReturnAddressHijackInfo(MethodInfo *    pMethodIn
     // with the GC on the way back to native code.
     if ((unwindBlockFlags & UBF_FUNC_REVERSE_PINVOKE) != 0)
         return false;
+
+#if defined(TARGET_ARM)
+        return false;
+#endif
 
 #ifdef USE_GC_INFO_DECODER
     // Unwind the current method context to the caller's context to get its stack pointer

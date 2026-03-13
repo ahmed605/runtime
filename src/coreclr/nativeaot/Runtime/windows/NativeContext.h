@@ -56,6 +56,24 @@ struct NATIVE_CONTEXT
         // Lr can be used as a scratch register
         lambda((size_t*)&ctx.Lr);
     }
+#elif defined(TARGET_ARM)
+    uintptr_t GetIp() { return ctx.Pc; }
+    uintptr_t GetSp() { return ctx.Sp; }
+    uintptr_t GetLr() { return ctx.Lr; }
+    void SetIp(uintptr_t val) { ctx.Pc = val; }
+    void SetSp(uintptr_t val) { ctx.Sp = val; }
+    void SetArg0Reg(uintptr_t val) { ctx.R0 = val; }
+    void SetArg1Reg(uintptr_t val) { ctx.R1 = val; }
+
+    template <typename F>
+    void ForEachPossibleObjectRef(F lambda)
+    {
+        for (uint32_t* pReg = (uint32_t*)&ctx.R0; pReg <= (uint32_t*)&ctx.R12; pReg++)
+            lambda((size_t*)pReg);
+
+        // Lr can be used as a scratch register
+        lambda((size_t*)&ctx.Lr);
+    }
 #endif
 };
 

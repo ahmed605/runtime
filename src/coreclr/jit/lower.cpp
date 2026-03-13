@@ -991,7 +991,7 @@ GenTree* Lowering::LowerSwitch(GenTree* node)
 
     bool useJumpSequence = jumpCnt < minSwitchTabJumpCnt;
 
-    if (TargetOS::IsUnix && TargetArchitecture::IsArm32)
+    if (TargetArchitecture::IsArm32)
     {
         // Force using an inlined jumping instead switch table generation.
         // Switch jump table is generated with incorrect values in NativeAOT case,

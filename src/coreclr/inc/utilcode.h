@@ -44,8 +44,8 @@ using std::nothrow;
 
 #include "random.h"
 
-#define WINDOWS_KERNEL32_DLLNAME_A "kernel32"
-#define WINDOWS_KERNEL32_DLLNAME_W W("kernel32")
+#define WINDOWS_KERNEL32_DLLNAME_A "kernelbase"
+#define WINDOWS_KERNEL32_DLLNAME_W W("kernelbase")
 
 #define CoreLibName_W W("System.Private.CoreLib")
 #define CoreLibName_IL_W W("System.Private.CoreLib.dll")

@@ -1137,7 +1137,7 @@ namespace Internal.TypeSystem.Ecma
                 : null;
             return hr;
 
-            [DllImport("ole32.dll")]
+            [DllImport("combase.dll")]
             static extern int CoCreateInstance(ref Guid rclsid, IntPtr pUnkOuter,
                                             int dwClsContext,
                                             ref Guid riid,

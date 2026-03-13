@@ -166,6 +166,19 @@ FCIMPL3(void, RhpCopyContextFromExInfo, void * pOSContext, int32_t cbOSContext, 
     pContext->Esi = pPalContext->Rsi;
     pContext->Eax = pPalContext->Rax;
     pContext->Ebx = pPalContext->Rbx;
+#elif defined(HOST_ARM)
+    pContext->R0  = pPalContext->R0;
+    pContext->R4  = pPalContext->R4;
+    pContext->R5  = pPalContext->R5;
+    pContext->R6  = pPalContext->R6;
+    pContext->R7  = pPalContext->R7;
+    pContext->R8  = pPalContext->R8;
+    pContext->R9  = pPalContext->R9;
+    pContext->R10 = pPalContext->R10;
+    pContext->R11 = pPalContext->R11;
+    pContext->Sp  = pPalContext->SP;
+    pContext->Lr  = pPalContext->LR;
+    pContext->Pc  = pPalContext->IP;
 #elif defined(HOST_ARM64)
     pContext->X0 = pPalContext->X0;
     pContext->X1 = pPalContext->X1;

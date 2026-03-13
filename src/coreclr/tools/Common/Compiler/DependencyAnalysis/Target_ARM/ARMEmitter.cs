@@ -171,24 +171,15 @@ namespace ILCompiler.DependencyAnalysis.ARM
 
         // movw  reg, [reloc] & 0x0000FFFF
         // movt  reg, [reloc] & 0xFFFF0000
-        // add   reg, pc
         // reg range: [0..12, LR]
         public void EmitMOV(Register destination, ISymbolNode symbol)
         {
             Debug.Assert(destination >= Register.R0 && (destination <= Register.R12 || destination == TargetRegister.LR));
-            Builder.EmitReloc(symbol, RelocType.IMAGE_REL_BASED_THUMB_MOV32_PCREL); // 12-byte offset is part of the relocation
+            Builder.EmitReloc(symbol, RelocType.IMAGE_REL_BASED_THUMB_MOV32);
             Builder.EmitShort(unchecked((short)0xf240));
             Builder.EmitShort((short)((byte)destination << 8));
             Builder.EmitShort(unchecked((short)0xf2c0));
             Builder.EmitShort((short)((byte)destination << 8));
-            if (destination <= Register.R7)
-            {
-                Builder.EmitShort(unchecked((short)(0x4478u + (byte)destination)));
-            }
-            else
-            {
-                Builder.EmitShort(unchecked((short)(0x44f0u + (byte)destination)));
-            }
         }
 
         // b.w symbol
@@ -200,6 +191,25 @@ namespace ILCompiler.DependencyAnalysis.ARM
             Builder.EmitByte(0xF0);
             Builder.EmitByte(0);
             Builder.EmitByte(0xB8);
+
+            //Builder.EmitReloc(symbol, RelocType.IMAGE_REL_BASED_THUMB_MOV32);
+            //Builder.EmitByte(0xDF);  // LDR r12, [PC, #imm12]
+            //Builder.EmitByte(0xF8);
+            //Builder.EmitByte(0x00);  // Offset low byte (will be patched by reloc)
+            //Builder.EmitByte(0xC0);  // r12 + offset high nibble
+
+            // LDR r12, [r12] - Load from indirection cell
+            //Builder.EmitByte(0x5C);  // LDR r12, [r12, #0]
+            //Builder.EmitByte(0xF8);
+            //Builder.EmitByte(0x00);
+            //Builder.EmitByte(0xC0);
+
+            // BX r12 - Branch to target
+            //Builder.EmitByte(0x60);  // BX r12
+            //Builder.EmitByte(0x47);
+
+            //EmitMOV(TargetRegister.InterproceduralScratch, symbol);
+            //EmitJMP(TargetRegister.InterproceduralScratch);
         }
 
         // bx reg

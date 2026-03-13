@@ -85,7 +85,7 @@ namespace
     {
         if (s_get_temp_path_func == nullptr)
         {
-            HMODULE kernel32 = ::LoadLibraryExW(L"kernel32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            HMODULE kernel32 = ::LoadLibraryExW(L"kernelbase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 
             get_temp_path_func_ptr get_temp_path_func_local = NULL;
             if (kernel32 != NULL)
@@ -1132,7 +1132,7 @@ typedef BOOL (WINAPI* is_wow64_process2)(
 bool pal::is_emulating_x64()
 {
 #if defined(TARGET_AMD64)
-    auto kernel32 = LoadLibraryExW(L"kernel32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    auto kernel32 = LoadLibraryExW(L"kernelbase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (kernel32 == nullptr)
     {
         // Loading kernel32.dll failed, log the error and continue.

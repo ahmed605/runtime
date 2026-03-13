@@ -404,7 +404,7 @@ PRTLRESTORECONTEXT g_pfnRtlRestoreContext = NULL;
 
 void InitializeOptionalWindowsAPIPointers()
 {
-    HMODULE hm = GetModuleHandleW(_T("kernel32.dll"));
+    HMODULE hm = GetModuleHandleW(_T("kernelbase.dll"));
     g_pfnInitializeContext2 = (PINITIALIZECONTEXT2)GetProcAddress(hm, "InitializeContext2");
 
 #ifdef TARGET_ARM64
