@@ -70,9 +70,6 @@ struct NATIVE_CONTEXT
     {
         for (uint32_t* pReg = (uint32_t*)&ctx.R0; pReg <= (uint32_t*)&ctx.R12; pReg++)
             lambda((size_t*)pReg);
-
-        // Lr can be used as a scratch register
-        lambda((size_t*)&ctx.Lr);
     }
 #endif
 };
