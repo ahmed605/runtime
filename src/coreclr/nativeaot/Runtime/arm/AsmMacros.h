@@ -66,9 +66,6 @@ $name   SETS    "|$symbol|"
 ;; CONSTANTS -- SYMBOLS
 ;;
         SETALIAS G_FREE_OBJECT_METHOD_TABLE, ?g_pFreeObjectEEType@@3PAVMethodTable@@A
-#ifdef FEATURE_GC_STRESS
-        SETALIAS THREAD__HIJACKFORGCSTRESS, ?HijackForGcStress@Thread@@SAXPAUPAL_LIMITED_CONTEXT@@@Z
-#endif ;; FEATURE_GC_STRESS
 
 ;;
 ;; IMPORTS
@@ -96,11 +93,6 @@ $name   SETS    "|$symbol|"
 #ifdef FEATURE_USE_SOFTWARE_WRITE_WATCH_FOR_GC_HEAP
         EXTERN g_write_watch_table
 #endif
-
-#ifdef FEATURE_GC_STRESS
-        EXTERN RhpStressGc
-        EXTERN $THREAD__HIJACKFORGCSTRESS
-#endif ;; FEATURE_GC_STRESS
 
 ;;
 ;; MACROS
