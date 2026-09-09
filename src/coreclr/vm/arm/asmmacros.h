@@ -38,6 +38,15 @@ $FuncName
     MEND
 
 ;-----------------------------------------------------------------------------
+; Macro used to create a label in the middle of a function and export it so that C++ code can refer to it.
+    MACRO
+    GLOBAL_LABEL $Name
+    EXPORT $Name
+$Name
+
+    MEND
+
+;-----------------------------------------------------------------------------
 ; Macro used to check (in debug builds only) whether the stack is 64-bit aligned (a requirement before calling
 ; out into C++/OS code). Invoke this directly after your prolog (if the stack frame size is fixed) or directly
 ; before a call (if you have a frame pointer and a dynamic stack). A breakpoint will be invoked if the stack
@@ -266,6 +275,16 @@ __SECTIONREL_t_runtime_thread_locals SETS "$__SECTIONREL_t_runtime_thread_locals
         EPILOG_STACK_FREE   4
         EPILOG_POP          {r4-r11,lr}
         EPILOG_STACK_FREE   16
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads the address of a global variable or function into a register. The assembler emits the address
+; into a literal pool.
+;
+    MACRO
+        PREPARE_EXTERNAL_VAR $Name, $Reg
+
+        ldr         $Reg, =$Name
     MEND
 
 ;-----------------------------------------------------------------------------
