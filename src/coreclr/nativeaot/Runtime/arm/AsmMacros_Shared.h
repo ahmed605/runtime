@@ -3,5 +3,9 @@
 
 // This file is used to allow sharing of assembly code between NativeAOT and CoreCLR, which have different conventions about how to ensure that constants offsets are accessible
 
+#ifdef TARGET_WINDOWS
+#include "AsmMacros.h"
+#else
 #include "AsmOffsets.inc"
 #include <unixasmmacros.inc>
+#endif

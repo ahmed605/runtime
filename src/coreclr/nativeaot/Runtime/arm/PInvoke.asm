@@ -1,62 +1,69 @@
-; Licensed to the .NET Foundation under one or more agreements.
-; The .NET Foundation licenses this file to you under the MIT license.
+;; Licensed to the .NET Foundation under one or more agreements.
+;; The .NET Foundation licenses this file to you under the MIT license.
 
-#include <AsmOffsets.inc>
-#include <AsmMacros.h>
+#include "AsmMacros.h"
 
-;
-; RhpPInvoke
-;
-; IN:  R0: address of pinvoke frame
-;
-; This helper assumes that its callsite is as good to start the stackwalk as the actual PInvoke callsite. 
-; The codegenerator must treat the callsite of this helper as GC triggering and generate the GC info for it.
-; Also, the codegenerator must ensure that there are no live GC references in callee saved registers.
-;
+        TEXTAREA
 
-	NESTED_ENTRY RhpPInvoke, _TEXT
-			str     lr, [r0, #OFFSETOF__PInvokeTransitionFrame__m_RIP]
-			str     r11, [r0, #OFFSETOF__PInvokeTransitionFrame__m_FramePointer]
-			; We need to save R9 which could be frame pointer if the caller method uses stackalloc (REG_SAVED_LOCALLOC_SP)
-			str     r9, [r0, #OFFSETOF__PInvokeTransitionFrame__m_PreservedRegs]
-			str     sp, [r0, #OFFSETOF__PInvokeTransitionFrame__m_PreservedRegs + 4]
-			mov     r3, #(PTFF_SAVE_R9 + PTFF_SAVE_SP)
-			str     r3, [r0, #OFFSETOF__PInvokeTransitionFrame__m_Flags]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; RhpPInvoke
+;;
+;; IN:  R0: address of pinvoke frame
+;;
+;; TRASHES: R1, R2, R3
+;;
+;; This helper assumes that its callsite is as good to start the stackwalk as the actual PInvoke callsite.
+;; The codegenerator must treat the callsite of this helper as GC triggering and generate the GC info for it.
+;; Also, the codegenerator must ensure that there are no live GC references in callee saved registers.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        LEAF_ENTRY RhpPInvoke
 
-			PROLOG_PUSH {r5,lr}
+        str     lr, [r0, #OFFSETOF__PInvokeTransitionFrame__m_RIP]
+        str     r11, [r0, #OFFSETOF__PInvokeTransitionFrame__m_FramePointer]
+        ;; We need to save R9 which could be frame pointer if the caller method uses stackalloc (REG_SAVED_LOCALLOC_SP)
+        str     r9, [r0, #OFFSETOF__PInvokeTransitionFrame__m_PreservedRegs]
+        str     sp, [r0, #(OFFSETOF__PInvokeTransitionFrame__m_PreservedRegs + 4)]
+        mov     r3, #(PTFF_SAVE_R9 + PTFF_SAVE_SP)
+        str     r3, [r0, #OFFSETOF__PInvokeTransitionFrame__m_Flags]
 
-			mov     r5, r0
-			; get TLS global variable address
-			; r0 = GetThread()
-			INLINE_GETTHREAD r0, r1
-			str     r0, [r5, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
-			str     r5, [r0, #OFFSETOF__Thread__m_pTransitionFrame]
+        ;; r1 = GetThread()
+        INLINE_GETTHREAD r1, r2
 
-			EPILOG_POP {r5,pc}
+        str     r1, [r0, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
+        str     r0, [r1, #OFFSETOF__Thread__m_pTransitionFrame]
 
-	NESTED_END RhpPInvoke
+        bx      lr
 
+        LEAF_END RhpPInvoke
 
-	;
-	; RhpPInvokeReturn
-	;
-	; IN:  R0: address of pinvoke frame
-	;
-	LEAF_ENTRY RhpPInvokeReturn, _TEXT
-			ldr     r3, [r0, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
+        INLINE_GETTHREAD_CONSTANT_POOL
 
-			mov     r2, #0
-			str     r2, [r3, #OFFSETOF__Thread__m_pTransitionFrame]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; RhpPInvokeReturn
+;;
+;; IN:  R0: address of pinvoke frame
+;;
+;; TRASHES: R2, R3
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        LEAF_ENTRY RhpPInvokeReturn
 
-			PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r3
-			cbnz    r3, ReturnRareTrapThread  ; TrapThreadsFlags_None = 0
+        ldr     r3, [r0, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
 
-			bx      lr
-ReturnRareTrapThread
-			; passing transition frame pointer in r0
-			b       C_FUNC(RhpWaitForGC2)
-	LEAF_END RhpPInvokeReturn
-	
-	INLINE_GETTHREAD_CONSTANT_POOL
+        mov     r2, #0
+        str     r2, [r3, #OFFSETOF__Thread__m_pTransitionFrame]
 
-	END
+        PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r3
+        cbnz    r3, %ft0                ;; TrapThreadsFlags_None = 0
+
+        bx      lr
+0
+        ;; passing transition frame pointer in r0
+        b       RhpWaitForGC2
+
+        LEAF_END RhpPInvokeReturn
+
+        END

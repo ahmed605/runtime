@@ -1,132 +1,131 @@
-; Licensed to the .NET Foundation under one or more agreements.
-; The .NET Foundation licenses this file to you under the MIT license.
+;; Licensed to the .NET Foundation under one or more agreements.
+;; The .NET Foundation licenses this file to you under the MIT license.
 
-#include <AsmMacros.h>
-#include "AsmOffsets.inc"
+#include "AsmMacros.h"
 
-    IMPORT RhpGcPoll2
-    IMPORT RhpThrowHwEx
+        TEXTAREA
 
-; See PUSH_COOP_PINVOKE_FRAME, this macro is very similar, but also saves return registers
-; and accepts the register bitmask
-; Call this macro first in the method (no further prolog instructions can be added after this).
-;
-;  threadReg     :  register containing the Thread* (this will be preserved).
-;  trashReg      : register that can be trashed by this macro
-;  BITMASK       : value to initialize m_dwFlags field with (register or #constant)
-    MACRO
-    PUSH_PROBE_FRAME $threadReg, $trashReg, $BITMASK
-    ; Define the method prolog, allocating enough stack space for the PInvokeTransitionFrame and saving
-    ; incoming register values into it.
-    PROLOG_VPUSH        {d0-d3}           ; Save d0-d3 which can have the floating point return value
-    PROLOG_PUSH         {r0,r1}           ; Save return registers
-    PROLOG_STACK_ALLOC  4                 ; Space for caller's SP
-    PROLOG_PUSH         {r4-r10}          ; Save non-volatile registers
-    PROLOG_STACK_ALLOC  8                 ; Space for flags and Thread*
-    PROLOG_PUSH         {r11,lr}          ; Save caller's frame pointer and return address
+        EXTERN RhpGcPoll2
 
-    str         $threadReg, [sp, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
-    mov         $trashReg, $BITMASK
-    str         $trashReg, [sp, #OFFSETOF__PInvokeTransitionFrame__m_Flags]
+;; See PUSH_COOP_PINVOKE_FRAME, this macro is very similar, but also saves return registers
+;; and accepts the register bitmask
+;; Call this macro first in the method (no further prolog instructions can be added after this).
+;;
+;;  $threadReg     : register containing the Thread* (this will be preserved).
+;;  $trashReg      : register that can be trashed by this macro
+;;  $BITMASK       : value to initialize m_dwFlags field with (register or #constant)
+        MACRO
+        PUSH_PROBE_FRAME $threadReg, $trashReg, $BITMASK
 
-    ; Compute SP value at entry to this method and save it in slot of the frame. 
-    add         $trashReg, sp, #(14 * 4 + 4 * 8)
-    str         $trashReg, [sp, #(11 * 4)]
+        ;; Define the method prolog, allocating enough stack space for the PInvokeTransitionFrame and saving
+        ;; incoming register values into it.
+        PROLOG_VPUSH        {d0-d3}             ; Save d0-d3 which can have the floating point return value
+        PROLOG_PUSH         {r0,r1}             ; Save return registers
+        PROLOG_STACK_ALLOC  4                   ; Space for caller's SP
+        PROLOG_PUSH         {r4-r10}            ; Save non-volatile registers
+        PROLOG_STACK_ALLOC  8                   ; Space for flags and Thread*
+        PROLOG_PUSH         {r11,lr}            ; Save caller's frame pointer and return address
 
-    ; Link the frame into the Thread
-    str         sp, [$threadReg, #OFFSETOF__Thread__m_pDeferredTransitionFrame]
-    MEND
+        str         $threadReg, [sp, #OFFSETOF__PInvokeTransitionFrame__m_pThread]
+        mov         $trashReg, $BITMASK
+        str         $trashReg, [sp, #OFFSETOF__PInvokeTransitionFrame__m_Flags]
 
-;
-; Remove the frame from a previous call to PUSH_PROBE_FRAME from the top of the stack and restore preserved
-; registers and return value to their values from before the probe was called (while also updating any
-; object refs or byrefs).
-;
-    MACRO
-    POP_PROBE_FRAME
-    EPILOG_POP          {r11,lr}          ; Restore caller's frame pointer and return address
-    EPILOG_STACK_FREE   8                 ; Discard flags and Thread*
-    EPILOG_POP          {r4-r10}          ; Restore non-volatile registers
-    EPILOG_STACK_FREE   4                 ; Discard caller's SP
-    EPILOG_POP          {r0,r1}           ; Restore return registers
-    EPILOG_VPOP         {d0-d3}           ; Restore d0-d3 which can have the floating point return value
-    MEND
+        ;; Compute SP value at entry to this method and save it in slot of the frame.
+        add         $trashReg, sp, #(14 * 4 + 4 * 8)
+        str         $trashReg, [sp, #(11 * 4)]
 
-;
-; The prolog for all GC suspension hijacks (normal and stress). Fixes up the hijacked return address, and
-; clears the hijack state. 
-;
-; Register state on entry: 
-;  All registers correct for return to the original return address.
-;
-; Register state on exit: 
-;  r2: thread pointer
-;  r3: trashed
-;
-    MACRO
-    FixupHijackedCallstack
-    push        {r0, r1}
+        ;; Link the frame into the Thread
+        str         sp, [$threadReg, #OFFSETOF__Thread__m_pDeferredTransitionFrame]
+        MEND
 
-    ; r0 <- GetThread()
-    INLINE_GETTHREAD r0, r1
+;;
+;; Remove the frame from a previous call to PUSH_PROBE_FRAME from the top of the stack and restore preserved
+;; registers and return value to their values from before the probe was called (while also updating any
+;; object refs or byrefs).
+;;
+        MACRO
+        POP_PROBE_FRAME
 
-    mov         r2, r0
-    pop         {r0, r1}
+        EPILOG_POP          {r11,lr}            ; Restore caller's frame pointer and return address
+        EPILOG_STACK_FREE   8                   ; Discard flags and Thread*
+        EPILOG_POP          {r4-r10}            ; Restore non-volatile registers
+        EPILOG_STACK_FREE   4                   ; Discard caller's SP
+        EPILOG_POP          {r0,r1}             ; Restore return registers
+        EPILOG_VPOP         {d0-d3}             ; Restore d0-d3 which can have the floating point return value
+        MEND
 
-    ; Fix the stack by restoring the original return address
-    ldr         lr, [r2, #OFFSETOF__Thread__m_pvHijackedReturnAddress]
+;;
+;; The prolog for all GC suspension hijacks (normal and stress). Fixes up the hijacked return address, and
+;; clears the hijack state.
+;;
+;; Register state on entry:
+;;  All registers correct for return to the original return address.
+;;
+;; Register state on exit:
+;;  r2: thread pointer
+;;  r3: trashed
+;;
+        MACRO
+        FixupHijackedCallstack
 
-    ; Clear hijack state
-    mov         r3, #0
-    str         r3, [r2, #OFFSETOF__Thread__m_ppvHijackedReturnAddressLocation]
-    str         r3, [r2, #OFFSETOF__Thread__m_pvHijackedReturnAddress]
-    MEND
+        ;; r2 <- GetThread(), r3 trashed. Unlike the Unix flavor this does not clobber r0/r1, so there is
+        ;; no need to spill them around the lookup.
+        INLINE_GETTHREAD r2, r3
 
-	NESTED_ENTRY RhpWaitForGC, _TEXT
-		PUSH_PROBE_FRAME r2, r3, r12
+        ;; Fix the stack by restoring the original return address
+        ldr         lr, [r2, #OFFSETOF__Thread__m_pvHijackedReturnAddress]
 
-		ldr         r0, [r2, #OFFSETOF__Thread__m_pDeferredTransitionFrame]
-		bl          RhpWaitForGC2
+        ;; Clear hijack state
+        mov         r3, #0
+        str         r3, [r2, #OFFSETOF__Thread__m_ppvHijackedReturnAddressLocation]
+        str         r3, [r2, #OFFSETOF__Thread__m_pvHijackedReturnAddress]
+        MEND
 
-		POP_PROBE_FRAME
-		bx          lr
+        NESTED_ENTRY RhpWaitForGC
+        PUSH_PROBE_FRAME r2, r3, r12
 
-	NESTED_END RhpWaitForGC
+        ldr         r0, [r2, #OFFSETOF__Thread__m_pDeferredTransitionFrame]
+        bl          RhpWaitForGC2
 
-	LEAF_ENTRY RhpGcPoll
-		PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r0
-		cmp         r0, #TrapThreadsFlags_None
-		bne.w         RhpGcPollRare
-		bx          lr
-	LEAF_END RhpGcPoll
+        POP_PROBE_FRAME
+        EPILOG_BRANCH_REG lr
 
-	NESTED_ENTRY RhpGcPollRare, _TEXT
-		PUSH_COOP_PINVOKE_FRAME r0
-		bl RhpGcPoll2
-		POP_COOP_PINVOKE_FRAME
-		bx           lr
-	NESTED_END RhpGcPollRare
+        NESTED_END RhpWaitForGC
 
-	NESTED_ENTRY RhpGcProbeHijack, _TEXT
-		FixupHijackedCallstack
+        LEAF_ENTRY RhpGcPoll
+        PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r0
+        cmp         r0, #TrapThreadsFlags_None
+        bne         RhpGcPollRare
+        bx          lr
+        LEAF_END RhpGcPoll
 
-		PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r3
-		tst         r3, #TrapThreadsFlags_TrapThreads
-		bne         WaitForGC
-		bx          lr
-WaitForGC
-		mov         r12, #(DEFAULT_FRAME_SAVE_FLAGS + PTFF_SAVE_R0)
-		orr         r12, r12, #PTFF_THREAD_HIJACK
-		b           RhpWaitForGC
-	NESTED_END RhpGcProbeHijack
+        NESTED_ENTRY RhpGcPollRare
+        PUSH_COOP_PINVOKE_FRAME r0
+        bl          RhpGcPoll2
+        POP_COOP_PINVOKE_FRAME
+        EPILOG_BRANCH_REG lr
+        NESTED_END RhpGcPollRare
+
+        LEAF_ENTRY RhpGcProbeHijack
+        FixupHijackedCallstack
+
+        PREPARE_EXTERNAL_VAR_INDIRECT RhpTrapThreads, r3
+        tst         r3, #TrapThreadsFlags_TrapThreads
+        bne         %ft0
+        bx          lr
+0
+        mov         r12, #(DEFAULT_FRAME_SAVE_FLAGS + PTFF_SAVE_R0)
+        orr         r12, r12, #PTFF_THREAD_HIJACK
+        b           RhpWaitForGC
+        LEAF_END RhpGcProbeHijack
+
+        INLINE_GETTHREAD_CONSTANT_POOL
 
 #ifdef FEATURE_GC_STRESS
-	LEAF_ENTRY RhpGcStressHijack
-		; Not implemented
-		EMIT_BREAKPOINT
-	LEAF_END RhpGcStressHijack
-#endif
+        LEAF_ENTRY RhpGcStressHijack
+        ;; Not implemented
+        EMIT_BREAKPOINT
+        LEAF_END RhpGcStressHijack
+#endif ;; FEATURE_GC_STRESS
 
-	INLINE_GETTHREAD_CONSTANT_POOL
-
-	END
+        END
