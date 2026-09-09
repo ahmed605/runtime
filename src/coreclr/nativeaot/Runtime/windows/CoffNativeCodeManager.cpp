@@ -145,44 +145,7 @@ static PTR_VOID GetUnwindDataBlob(TADDR moduleBase, PTR_RUNTIME_FUNCTION pRuntim
 
     return pUnwindInfo;
 
-#elif defined(TARGET_ARM)
-
-    // See https://docs.microsoft.com/en-us/cpp/build/arm-exception-handling
-    ASSERT((pRuntimeFunction->UnwindData & 0x3) == 0);
-
-    PTR_uint32_t xdata = dac_cast<PTR_uint32_t>(pRuntimeFunction->UnwindData + moduleBase);
-
-    int size;
-    int unwindWords;
-    int epilogScopes;
-
-    if ((xdata[0] >> 23) != 0)
-    {
-        size = 4;
-        epilogScopes = (xdata[0] >> 23) & 0x1f;
-        unwindWords = (xdata[0] >> 28) & 0x0f;
-    }
-    else
-    {
-        size = 8;
-        epilogScopes = xdata[1] & 0xffff;
-        unwindWords = (xdata[1] >> 16) & 0xff;
-    }
-
-    if ((xdata[0] & (1 << 21)) == 0)
-        size += 4 * epilogScopes;
-
-    size += 4 * unwindWords;
-
-    if ((xdata[0] & (1 << 20)) != 0)
-    {
-        size += 4;
-    }
-
-    *pSize = size;
-    return xdata;
-
-#elif defined(TARGET_ARM64)
+#elif defined(TARGET_ARM) || defined(TARGET_ARM64)
 
     // if this function uses packed unwind data then at least one of the two least significant bits
     // will be non-zero.  if this is the case then there will be no xdata record to enumerate.
@@ -192,9 +155,15 @@ static PTR_VOID GetUnwindDataBlob(TADDR moduleBase, PTR_RUNTIME_FUNCTION pRuntim
     PTR_uint32_t xdata = dac_cast<PTR_uint32_t>(pRuntimeFunction->UnwindData + moduleBase);
     int size = 4;
 
+#if defined(TARGET_ARM)
+    // See https://docs.microsoft.com/en-us/cpp/build/arm-exception-handling
+    int unwindWords = xdata[0] >> 28;
+    int epilogScopes = (xdata[0] >> 23) & 0x1f;
+#else
     // See https://docs.microsoft.com/en-us/cpp/build/arm64-exception-handling
     int unwindWords = xdata[0] >> 27;
     int epilogScopes = (xdata[0] >> 22) & 0x1f;
+#endif
 
     if (unwindWords == 0 && epilogScopes == 0)
     {
@@ -649,42 +618,19 @@ uintptr_t CoffNativeCodeManager::GetConservativeUpperBoundForOutgoingArgs(Method
             upperBound = dac_cast<TADDR>(pRegisterSet->GetFP() - ((PTR_UNWIND_INFO) pUnwindDataBlob)->FrameOffset);
         }
 
-#elif defined(TARGET_ARM)
-        DWORD   EstablisherFrame;
-        PVOID   HandlerData;
-        CONTEXT context;
-        context.R4 = pRegisterSet->pR4 != NULL ? *pRegisterSet->pR4 : 0;
-        context.R5 = pRegisterSet->pR5 != NULL ? *pRegisterSet->pR5 : 0;
-        context.R6 = pRegisterSet->pR6 != NULL ? *pRegisterSet->pR6 : 0;
-        context.R7 = pRegisterSet->pR7 != NULL ? *pRegisterSet->pR7 : 0;
-        context.R8 = pRegisterSet->pR8 != NULL ? *pRegisterSet->pR8 : 0;
-        context.R9 = pRegisterSet->pR9 != NULL ? *pRegisterSet->pR9 : 0;
-        context.R10 = pRegisterSet->pR10 != NULL ? *pRegisterSet->pR10 : 0;
-        context.R11 = pRegisterSet->pR11 != NULL ? *pRegisterSet->pR11 : 0;
-        context.Sp = pRegisterSet->GetSP();
-        context.Lr = pRegisterSet->pLR != NULL ? *pRegisterSet->pLR : 0;
-        context.Pc = pRegisterSet->GetIP();
-
-        RtlVirtualUnwind(NULL,
-                        dac_cast<TADDR>(m_moduleBase),
-                        pRegisterSet->IP,
-                        (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
-                        &context,
-                        &HandlerData,
-                        &EstablisherFrame,
-                        NULL);
-
-        upperBound = dac_cast<TADDR>(context.Sp);
-
-#elif defined(TARGET_ARM64)
+#elif defined(TARGET_ARM) || defined(TARGET_ARM64)
         // Unwind the current method context to get the caller's stack pointer
         // and use it as the upper bound for the callee
         SIZE_T  EstablisherFrame;
         PVOID   HandlerData;
         CONTEXT context;
-        context.Sp = pRegisterSet->GetSP();
-        context.Fp = pRegisterSet->GetFP();
-        context.Pc = pRegisterSet->GetIP();
+        context.Sp  = pRegisterSet->GetSP();
+#if defined(TARGET_ARM64)
+        context.Fp  = pRegisterSet->GetFP();
+#else
+        context.R11 = pRegisterSet->GetFP();
+#endif
+        context.Pc  = pRegisterSet->GetIP();
 
         RtlVirtualUnwind(NULL,
                         dac_cast<TADDR>(m_moduleBase),
@@ -692,6 +638,9 @@ uintptr_t CoffNativeCodeManager::GetConservativeUpperBoundForOutgoingArgs(Method
                         (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
                         &context,
                         &HandlerData,
+#if defined(TARGET_ARM)
+                        (PDWORD)
+#endif
                         &EstablisherFrame,
                         NULL);
 
@@ -879,27 +828,8 @@ bool CoffNativeCodeManager::UnwindStackFrame(MethodInfo *    pMethodInfo,
             context.D[i] = pRegisterSet->D[i - 8];
     }
 
-    context.R4 = pRegisterSet->pR4 != NULL ? *pRegisterSet->pR4 : 0;
-    context.R5 = pRegisterSet->pR5 != NULL ? *pRegisterSet->pR5 : 0;
-    context.R6 = pRegisterSet->pR6 != NULL ? *pRegisterSet->pR6 : 0;
-    context.R7 = pRegisterSet->pR7 != NULL ? *pRegisterSet->pR7 : 0;
-    context.R8 = pRegisterSet->pR8 != NULL ? *pRegisterSet->pR8 : 0;
-    context.R9 = pRegisterSet->pR9 != NULL ? *pRegisterSet->pR9 : 0;
-    context.R10 = pRegisterSet->pR10 != NULL ? *pRegisterSet->pR10 : 0;
-    context.R11 = pRegisterSet->pR11 != NULL ? *pRegisterSet->pR11 : 0;
     context.Sp = pRegisterSet->SP;
-    context.Lr = pRegisterSet->pLR != NULL ? *pRegisterSet->pLR : 0;
     context.Pc = pRegisterSet->IP;
-
-    contextPointers.R4 = (PDWORD)pRegisterSet->pR4;
-    contextPointers.R5 = (PDWORD)pRegisterSet->pR5;
-    contextPointers.R6 = (PDWORD)pRegisterSet->pR6;
-    contextPointers.R7 = (PDWORD)pRegisterSet->pR7;
-    contextPointers.R8 = (PDWORD)pRegisterSet->pR8;
-    contextPointers.R9 = (PDWORD)pRegisterSet->pR9;
-    contextPointers.R10 = (PDWORD)pRegisterSet->pR10;
-    contextPointers.R11 = (PDWORD)pRegisterSet->pR11;
-    contextPointers.Lr = (PDWORD)pRegisterSet->pLR;
 
     DWORD   EstablisherFrame;
     PVOID   HandlerData;
@@ -1019,55 +949,7 @@ bool CoffNativeCodeManager::GetReturnAddressHijackInfo(MethodInfo *    pMethodIn
 
     *ppvRetAddrLocation = (PTR_PTR_VOID)(context.Rsp - sizeof (PVOID));
     return true;
-#elif defined(TARGET_ARM)
-
-    if ((unwindBlockFlags & UBF_FUNC_HAS_ASSOCIATED_DATA) != 0)
-        p += sizeof(int32_t);
-
-    if ((unwindBlockFlags & UBF_FUNC_HAS_EHINFO) != 0)
-        p += sizeof(int32_t);
-
-    GcInfoDecoderFlags flags = DECODE_HAS_TAILCALLS;
-    GcInfoDecoder decoder(GCInfoToken(p), flags);
-    if (decoder.HasTailCalls())
-        return false;
-
-    context.R4 = pRegisterSet->pR4 != NULL ? *pRegisterSet->pR4 : 0;
-    context.R5 = pRegisterSet->pR5 != NULL ? *pRegisterSet->pR5 : 0;
-    context.R6 = pRegisterSet->pR6 != NULL ? *pRegisterSet->pR6 : 0;
-    context.R7 = pRegisterSet->pR7 != NULL ? *pRegisterSet->pR7 : 0;
-    context.R8 = pRegisterSet->pR8 != NULL ? *pRegisterSet->pR8 : 0;
-    context.R9 = pRegisterSet->pR9 != NULL ? *pRegisterSet->pR9 : 0;
-    context.R10 = pRegisterSet->pR10 != NULL ? *pRegisterSet->pR10 : 0;
-    context.R11 = pRegisterSet->pR11 != NULL ? *pRegisterSet->pR11 : 0;
-    context.Sp = pRegisterSet->GetSP();
-    context.Pc = pRegisterSet->GetIP();
-    context.Lr = pRegisterSet->pLR != NULL ? *pRegisterSet->pLR : 0;
-
-    KNONVOLATILE_CONTEXT_POINTERS contextPointers;
-#ifdef _DEBUG
-    memset(&contextPointers, 0xDD, sizeof(contextPointers));
-#endif
-    contextPointers.Lr = (PDWORD)pRegisterSet->pLR;
-
-    RtlVirtualUnwind(NULL,
-        dac_cast<TADDR>(m_moduleBase),
-        pRegisterSet->IP,
-        (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
-        &context,
-        &HandlerData,
-        (PDWORD)&EstablisherFrame,
-        &contextPointers);
-
-    if (contextPointers.Lr == (PDWORD)pRegisterSet->pLR)
-    {
-        return false;
-    }
-
-    *ppvRetAddrLocation = (PTR_PTR_VOID)contextPointers.Lr;
-    return true;
-
-#elif defined(TARGET_ARM64)
+#elif defined(TARGET_ARM) || defined(TARGET_ARM64)
 
     if ((unwindBlockFlags & UBF_FUNC_HAS_ASSOCIATED_DATA) != 0)
         p += sizeof(int32_t);
@@ -1092,16 +974,24 @@ bool CoffNativeCodeManager::GetReturnAddressHijackInfo(MethodInfo *    pMethodIn
         return false;
     }
 
-    context.Sp = pRegisterSet->GetSP();
-    context.Fp = pRegisterSet->GetFP();
-    context.Pc = pRegisterSet->GetIP();
-    context.Lr = *pRegisterSet->pLR;
+    context.Sp  = pRegisterSet->GetSP();
+#if defined(TARGET_ARM64)
+    context.Fp  = pRegisterSet->GetFP();
+#else
+    context.R11 = pRegisterSet->GetFP();
+#endif
+    context.Pc  = pRegisterSet->GetIP();
+    context.Lr  = *pRegisterSet->pLR;
 
     KNONVOLATILE_CONTEXT_POINTERS contextPointers;
 #ifdef _DEBUG
     memset(&contextPointers, 0xDD, sizeof(contextPointers));
 #endif
-    contextPointers.Lr = pRegisterSet->pLR;
+    contextPointers.Lr =
+#if defined(TARGET_ARM)
+        (PDWORD)
+#endif
+        pRegisterSet->pLR;
 
     RtlVirtualUnwind(NULL,
         dac_cast<TADDR>(m_moduleBase),
@@ -1109,10 +999,13 @@ bool CoffNativeCodeManager::GetReturnAddressHijackInfo(MethodInfo *    pMethodIn
         (PRUNTIME_FUNCTION)pNativeMethodInfo->runtimeFunction,
         &context,
         &HandlerData,
+#if defined(TARGET_ARM)
+        (PDWORD)
+#endif
         &EstablisherFrame,
         &contextPointers);
 
-    if (contextPointers.Lr == pRegisterSet->pLR)
+    if ((PTR_uintptr_t)contextPointers.Lr == (PTR_uintptr_t)pRegisterSet->pLR)
     {
         // This is the case when we are either:
         //
