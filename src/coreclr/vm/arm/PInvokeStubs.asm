@@ -206,7 +206,6 @@ RarePath
             ldr     r6, [r5, #Thread_m_pFrame]
             str     r6, [r4, #Frame__m_Next]
 
-            str     r5, [r4, #InlinedCallFrame__m_pThread]
             str     r11, [r4, #InlinedCallFrame__m_pCalleeSavedFP]
             str     r9, [r4, #InlinedCallFrame__m_pSPAfterProlog]
             mov     r6, 0

@@ -193,3 +193,106 @@ $__SECTIONREL_t_CurrentThreadInfo
 
 __SECTIONREL_t_CurrentThreadInfo SETS "$__SECTIONREL_t_CurrentThreadInfo":CC:"_"
     MEND
+
+;-----------------------------------------------------------------------------
+; Macro to get a pointer to the RuntimeThreadLocals of the currently executing thread. The allocation
+; context of the thread lives at OFFSETOF__ee_alloc_context from the returned base, which matches the
+; value returned by GetThreadEEAllocContext().
+;
+        GBLS __SECTIONREL_t_runtime_thread_locals
+__SECTIONREL_t_runtime_thread_locals SETS "SECTIONREL_t_runtime_thread_locals"
+
+    SETALIAS t_runtime_thread_locals, ?t_runtime_thread_locals@@3URuntimeThreadLocals@@A
+
+#define OFFSETOF__ee_alloc_context OFFSETOF__RuntimeThreadLocals__ee_alloc_context
+
+    MACRO
+        INLINE_GET_ALLOC_CONTEXT_BASE $destReg, $trashReg
+        EXTERN _tls_index
+
+        ldr         $destReg, =_tls_index
+        ldr         $destReg, [$destReg]
+        mrc         p15, 0, $trashReg, c13, c0, 2
+        ldr         $trashReg, [$trashReg, #__tls_array]
+        ldr         $destReg, [$trashReg, $destReg, lsl #2]
+        ldr         $trashReg, $__SECTIONREL_t_runtime_thread_locals
+        add         $destReg, $trashReg                ; return &t_runtime_thread_locals
+    MEND
+
+;-----------------------------------------------------------------------------
+; INLINE_GET_ALLOC_CONTEXT_BASE_CONSTANT_POOL macro has to be used after the last function in the .asm file
+; that used INLINE_GET_ALLOC_CONTEXT_BASE. Optionally, it can be also used after any function that used
+; INLINE_GET_ALLOC_CONTEXT_BASE to improve density, or to reduce distance between the constant pool and its
+; use.
+;
+    MACRO
+        INLINE_GET_ALLOC_CONTEXT_BASE_CONSTANT_POOL
+        EXTERN $t_runtime_thread_locals
+
+$__SECTIONREL_t_runtime_thread_locals
+        DCDU $t_runtime_thread_locals
+        RELOC 15 ;; SECREL
+
+__SECTIONREL_t_runtime_thread_locals SETS "$__SECTIONREL_t_runtime_thread_locals":CC:"_"
+    MEND
+
+;-----------------------------------------------------------------------------
+; Macro used from unmanaged helpers called from managed code where the helper does not transition
+; immediately into pre-emptive mode but may cause a GC and thus requires the stack is crawlable. The
+; macro builds a TransitionBlock describing the current state of managed code and leaves a pointer to it
+; in $target.
+;
+; The layout below has to match the TransitionBlock structure, which starts with the callee saved
+; registers and is immediately followed by the (uninitialized) argument register home area.
+;
+    MACRO
+        PUSH_COOP_PINVOKE_FRAME $target
+
+        PROLOG_STACK_ALLOC  16              ; Reserve space for the argument registers
+        PROLOG_PUSH         {r4-r11,lr}     ; Save the callee saved registers and the return address
+        PROLOG_STACK_ALLOC  4               ; Align the stack to 8 bytes
+
+        CHECK_STACK_ALIGNMENT
+
+        add                 $target, sp, #4
+    MEND
+
+;-----------------------------------------------------------------------------
+; Pop the frame and restore the register state preserved by PUSH_COOP_PINVOKE_FRAME.
+;
+    MACRO
+        POP_COOP_PINVOKE_FRAME
+
+        EPILOG_STACK_FREE   4
+        EPILOG_POP          {r4-r11,lr}
+        EPILOG_STACK_FREE   16
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads the value of a global variable into a register. Unlike the Unix flavor, which materializes a
+; PC relative address, the Windows flavor relies on the assembler emitting the address of the variable
+; into a literal pool.
+;
+    MACRO
+        PREPARE_EXTERNAL_VAR_INDIRECT $Name, $Reg
+
+        ldr         $Reg, =$Name
+        ldr         $Reg, [$Reg]
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads a 32bit constant into a destination register
+;
+    MACRO
+        MOV32 $destReg, $constant
+
+        movw        $destReg, #(($constant) :AND: 0xFFFF)
+        movt        $destReg, #(($constant) :SHR: 16)
+    MEND
+
+;-----------------------------------------------------------------------------
+; GC type flags. These have to match the GC_ALLOC_FLAGS enumeration.
+;
+#define GC_ALLOC_FINALIZE 1
+#define GC_ALLOC_ALIGN8_BIAS 4
+#define GC_ALLOC_ALIGN8 8
