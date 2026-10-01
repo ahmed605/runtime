@@ -85,7 +85,7 @@ bool Amsi::IsBlockedByAmsiScan(PVOID flatImageBytes, COUNT_T size)
         static bool amsiInitializationAttempted = false;
         if (s_amsiContext == nullptr && !amsiInitializationAttempted)
         {
-            HMODULE amsi = CLRLoadLibraryEx(W("amsi.dll"), nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            HMODULE amsi = CLRLoadLibraryEx(W("amsi.dll"), nullptr, NULL);
             if (amsi != nullptr)
             {
                 PAMSI_AMSIINITIALIZE_API AmsiInitialize = (PAMSI_AMSIINITIALIZE_API)GetProcAddress(amsi, "AmsiInitialize");

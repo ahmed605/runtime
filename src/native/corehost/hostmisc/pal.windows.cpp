@@ -85,7 +85,7 @@ namespace
     {
         if (s_get_temp_path_func == nullptr)
         {
-            HMODULE kernel32 = ::LoadLibraryExW(L"kernelbase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+            HMODULE kernel32 = ::LoadLibraryExW(L"kernelbase.dll", NULL, NULL);
 
             get_temp_path_func_ptr get_temp_path_func_local = NULL;
             if (kernel32 != NULL)
@@ -281,7 +281,7 @@ bool pal::load_library(const string_t* in_path, dll_t* dll)
     //Adding the assert to ensure relative paths which are not just filenames are not used for LoadLibrary Calls
     assert(!LongFile::IsPathNotFullyQualified(path) || !LongFile::ContainsDirectorySeparator(path));
 
-    *dll = ::LoadLibraryExW(path.c_str(), NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+    *dll = ::LoadLibraryExW(path.c_str(), NULL, NULL);
     if (*dll == nullptr)
     {
         int error_code = ::GetLastError();
@@ -1132,7 +1132,7 @@ typedef BOOL (WINAPI* is_wow64_process2)(
 bool pal::is_emulating_x64()
 {
 #if defined(TARGET_AMD64)
-    auto kernel32 = LoadLibraryExW(L"kernelbase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    auto kernel32 = LoadLibraryExW(L"kernelbase.dll", NULL, NULL);
     if (kernel32 == nullptr)
     {
         // Loading kernel32.dll failed, log the error and continue.

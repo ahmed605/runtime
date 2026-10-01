@@ -2,7 +2,7 @@
 SETLOCAL
 
 IF "%~1"=="" (
-    ECHO Usage: %~nx0 ^<arch^>
+    ECHO Usage: %~nx0 ^<arch^> [winsdk_version]
     GOTO :ERROR
 )
 
@@ -23,14 +23,19 @@ IF "%vsBase%"=="" GOTO :ERROR
 IF /I "%PROCESSOR_ARCHITECTURE%" == "ARM64" (
     IF /I "%~1" == "x64"   ( set vcEnvironment=arm64_amd64 )
     IF /I "%~1" == "x86"   ( set vcEnvironment=arm64_x86 )
+    IF /I "%~1" == "arm"   ( set vcEnvironment=arm64_arm )
     IF /I "%~1" == "arm64" ( set vcEnvironment=arm64 )
 ) ELSE (
     IF /I "%~1" == "x64"   ( set vcEnvironment=amd64 )
     IF /I "%~1" == "x86"   ( set vcEnvironment=amd64_x86 )
     IF /I "%~1" == "arm64" ( set vcEnvironment=amd64_arm64 )
+    IF /I "%~1" == "arm"   ( set vcEnvironment=amd64_arm )
 )
 
-CALL "%vsBase%\vc\Auxiliary\Build\vcvarsall.bat" %vcEnvironment% > NUL
+SET vcSdkArg=
+IF NOT "%~2"=="" SET vcSdkArg= %~2
+
+CALL "%vsBase%\vc\Auxiliary\Build\vcvarsall.bat" %vcEnvironment%%vcSdkArg% > NUL
 
 FOR /F "delims=" %%W IN ('where link') DO (
     FOR %%A IN ("%%W") DO ECHO %%~dpA#

@@ -29,6 +29,7 @@ void SoftwareWriteWatch::StaticClose()
     g_gc_sw_ww_table = nullptr;
 }
 
+BOOLEAN BitScanForward64(DWORD* Index, DWORD64 Mask);
 bool SoftwareWriteWatch::GetDirtyFromBlock(
     uint8_t *block,
     uint8_t *firstPageAddressInBlock,

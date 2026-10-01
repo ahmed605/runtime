@@ -172,7 +172,7 @@ bool TryLoadHostPolicy(const WCHAR* hostPolicyPath)
     // Check if a hostpolicy exists and if it does, load it.
     if (INVALID_FILE_ATTRIBUTES != ::GetFileAttributesW(hostPolicyPath))
     {
-        hMod = ::LoadLibraryExW(hostPolicyPath, nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        hMod = ::LoadLibraryExW(hostPolicyPath, nullptr, NULL);
         if (hMod == nullptr)
             return false;
 
@@ -225,7 +225,7 @@ HRESULT coreclr::GetCoreClrInstance(_Outptr_ coreclr **instance, _In_opt_z_ cons
 
         pathLocal.append(W("\\coreclr.dll"));
 
-        AutoModule hmod = ::LoadLibraryExW(pathLocal.c_str() , nullptr, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
+        AutoModule hmod = ::LoadLibraryExW(pathLocal.c_str() , nullptr, NULL);
         if (hmod == nullptr)
             return HRESULT_FROM_WIN32(::GetLastError());
 

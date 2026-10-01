@@ -74,7 +74,7 @@ if "%__VCBuildArch%"=="" exit /b 0
 :: This is very useful for testing with new MSVC versions that aren't in a VS build yet.
 if not defined SkipVCEnvInit (
   if not exist "%VCINSTALLDIR%Auxiliary\Build\vcvarsall.bat" goto :VSMissing
-  call "%VCINSTALLDIR%Auxiliary\Build\vcvarsall.bat" %__VCBuildArch%
+  call "%VCINSTALLDIR%Auxiliary\Build\vcvarsall.bat" %__VCBuildArch% 10.0.22000.0
   if not "%ErrorLevel%"=="0" exit /b 1
 )
 

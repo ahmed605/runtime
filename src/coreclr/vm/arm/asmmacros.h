@@ -38,6 +38,15 @@ $FuncName
     MEND
 
 ;-----------------------------------------------------------------------------
+; Macro used to create a label in the middle of a function and export it so that C++ code can refer to it.
+    MACRO
+    GLOBAL_LABEL $Name
+    EXPORT $Name
+$Name
+
+    MEND
+
+;-----------------------------------------------------------------------------
 ; Macro used to check (in debug builds only) whether the stack is 64-bit aligned (a requirement before calling
 ; out into C++/OS code). Invoke this directly after your prolog (if the stack frame size is fixed) or directly
 ; before a call (if you have a frame pointer and a dynamic stack). A breakpoint will be invoked if the stack
@@ -113,14 +122,13 @@ __PWTB_StackAlloc SETA __PWTB_TransitionBlock
 
         ; Spill callee saved registers and return address.
         PROLOG_PUSH         {r4-r11,lr}
-		PROLOG_STACK_SAVE r7
 
         ; Allocate space for the rest of the frame
         PROLOG_STACK_ALLOC  __PWTB_StackAlloc
 
         IF __PWTB_SaveFPArgs
         add         r6, sp, #(__PWTB_FloatArgumentRegisters)
-        vstm        r6, {d0-d7}
+        vstm        r6, {s0-s15}
         ENDIF
 
         CHECK_STACK_ALIGNMENT
@@ -135,7 +143,7 @@ __PWTB_StackAlloc SETA __PWTB_TransitionBlock
 
         IF __PWTB_SaveFPArgs
         add         r6, sp, #(__PWTB_FloatArgumentRegisters)
-        vldm        r6, {d0-d7}
+        vldm        r6, {s0-s15}
         ENDIF
 
         EPILOG_STACK_FREE   __PWTB_StackAlloc
@@ -194,3 +202,116 @@ $__SECTIONREL_t_CurrentThreadInfo
 
 __SECTIONREL_t_CurrentThreadInfo SETS "$__SECTIONREL_t_CurrentThreadInfo":CC:"_"
     MEND
+
+;-----------------------------------------------------------------------------
+; Macro to get a pointer to the RuntimeThreadLocals of the currently executing thread. The allocation
+; context of the thread lives at OFFSETOF__ee_alloc_context from the returned base, which matches the
+; value returned by GetThreadEEAllocContext().
+;
+        GBLS __SECTIONREL_t_runtime_thread_locals
+__SECTIONREL_t_runtime_thread_locals SETS "SECTIONREL_t_runtime_thread_locals"
+
+    SETALIAS t_runtime_thread_locals, ?t_runtime_thread_locals@@3URuntimeThreadLocals@@A
+
+#define OFFSETOF__ee_alloc_context OFFSETOF__RuntimeThreadLocals__ee_alloc_context
+
+    MACRO
+        INLINE_GET_ALLOC_CONTEXT_BASE $destReg, $trashReg
+        EXTERN _tls_index
+
+        ldr         $destReg, =_tls_index
+        ldr         $destReg, [$destReg]
+        mrc         p15, 0, $trashReg, c13, c0, 2
+        ldr         $trashReg, [$trashReg, #__tls_array]
+        ldr         $destReg, [$trashReg, $destReg, lsl #2]
+        ldr         $trashReg, $__SECTIONREL_t_runtime_thread_locals
+        add         $destReg, $trashReg                ; return &t_runtime_thread_locals
+    MEND
+
+;-----------------------------------------------------------------------------
+; INLINE_GET_ALLOC_CONTEXT_BASE_CONSTANT_POOL macro has to be used after the last function in the .asm file
+; that used INLINE_GET_ALLOC_CONTEXT_BASE. Optionally, it can be also used after any function that used
+; INLINE_GET_ALLOC_CONTEXT_BASE to improve density, or to reduce distance between the constant pool and its
+; use.
+;
+    MACRO
+        INLINE_GET_ALLOC_CONTEXT_BASE_CONSTANT_POOL
+        EXTERN $t_runtime_thread_locals
+
+$__SECTIONREL_t_runtime_thread_locals
+        DCDU $t_runtime_thread_locals
+        RELOC 15 ;; SECREL
+
+__SECTIONREL_t_runtime_thread_locals SETS "$__SECTIONREL_t_runtime_thread_locals":CC:"_"
+    MEND
+
+;-----------------------------------------------------------------------------
+; Macro used from unmanaged helpers called from managed code where the helper does not transition
+; immediately into pre-emptive mode but may cause a GC and thus requires the stack is crawlable. The
+; macro builds a TransitionBlock describing the current state of managed code and leaves a pointer to it
+; in $target.
+;
+; The layout below has to match the TransitionBlock structure, which starts with the callee saved
+; registers and is immediately followed by the (uninitialized) argument register home area.
+;
+    MACRO
+        PUSH_COOP_PINVOKE_FRAME $target
+
+        PROLOG_STACK_ALLOC  16              ; Reserve space for the argument registers
+        PROLOG_PUSH         {r4-r11,lr}     ; Save the callee saved registers and the return address
+        PROLOG_STACK_ALLOC  4               ; Align the stack to 8 bytes
+
+        CHECK_STACK_ALIGNMENT
+
+        add                 $target, sp, #4
+    MEND
+
+;-----------------------------------------------------------------------------
+; Pop the frame and restore the register state preserved by PUSH_COOP_PINVOKE_FRAME.
+;
+    MACRO
+        POP_COOP_PINVOKE_FRAME
+
+        EPILOG_STACK_FREE   4
+        EPILOG_POP          {r4-r11,lr}
+        EPILOG_STACK_FREE   16
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads the address of a global variable or function into a register. The assembler emits the address
+; into a literal pool.
+;
+    MACRO
+        PREPARE_EXTERNAL_VAR $Name, $Reg
+
+        ldr         $Reg, =$Name
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads the value of a global variable into a register. Unlike the Unix flavor, which materializes a
+; PC relative address, the Windows flavor relies on the assembler emitting the address of the variable
+; into a literal pool.
+;
+    MACRO
+        PREPARE_EXTERNAL_VAR_INDIRECT $Name, $Reg
+
+        ldr         $Reg, =$Name
+        ldr         $Reg, [$Reg]
+    MEND
+
+;-----------------------------------------------------------------------------
+; Loads a 32bit constant into a destination register
+;
+    MACRO
+        MOV32 $destReg, $constant
+
+        movw        $destReg, #(($constant) :AND: 0xFFFF)
+        movt        $destReg, #(($constant) :SHR: 16)
+    MEND
+
+;-----------------------------------------------------------------------------
+; GC type flags. These have to match the GC_ALLOC_FLAGS enumeration.
+;
+#define GC_ALLOC_FINALIZE 1
+#define GC_ALLOC_ALIGN8_BIAS 4
+#define GC_ALLOC_ALIGN8 8

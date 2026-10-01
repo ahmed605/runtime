@@ -154,7 +154,7 @@ namespace
         const pal::char_t *details,
         const pal::char_t *url)
     {
-        HMODULE comctl32 = ::LoadLibraryExW(L"comctl32.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        HMODULE comctl32 = ::LoadLibraryExW(L"comctl32.dll", nullptr, NULL);
         if (comctl32 == nullptr)
             return false;
 

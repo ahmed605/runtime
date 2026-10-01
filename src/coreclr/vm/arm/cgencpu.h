@@ -292,6 +292,10 @@ inline void ClearITState(T_CONTEXT *context) {
     context->Cpsr = context->Cpsr & 0xf9ff03ff;
 }
 
+#ifdef FEATURE_COMINTEROP
+void emitCOMStubCall (ComCallMethodDesc *pCOMMethodRX, ComCallMethodDesc *pCOMMethodRW, PCODE target);
+#endif // FEATURE_COMINTEROP
+
 //------------------------------------------------------------------------
 inline void emitUnconditionalBranchThumb(LPBYTE pBuffer, int16_t offset)
 {

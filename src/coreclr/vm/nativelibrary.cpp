@@ -587,7 +587,7 @@ namespace
         // the OS implementation of api sets.
         if (IsWindowsAPISet(wszLibName))
         {
-            hmod = LocalLoadLibraryHelper(wszLibName, LOAD_LIBRARY_SEARCH_SYSTEM32, pErrorTracker);
+            hmod = LocalLoadLibraryHelper(wszLibName, NULL, pErrorTracker);
             if (hmod != NULL)
             {
                 return hmod;
@@ -613,13 +613,13 @@ namespace
         AppDomain* pDomain = GetAppDomain();
         DWORD loadWithAlteredPathFlags = GetLoadWithAlteredSearchPathFlag();
         DWORD loadLibrarySearchFlags = 0;
-#ifdef TARGET_WINDOWS
+/*#ifdef TARGET_WINDOWS
         loadLibrarySearchFlags = LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR
             | LOAD_LIBRARY_SEARCH_APPLICATION_DIR
             | LOAD_LIBRARY_SEARCH_USER_DIRS
             | LOAD_LIBRARY_SEARCH_SYSTEM32
             | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS;
-#endif
+#endif*/
         bool libNameIsRelativePath = Path::IsRelative(wszLibName);
 
         // P/Invokes are often declared with variations on the actual library name.

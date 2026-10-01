@@ -1,0 +1,168 @@
+diff --git "a/C:\\Tools\\dotnet-10.0.100\\sdk\\10.0.100\\Microsoft.NETCoreSdk.BundledVersions.props" "b/C:\\Dev\\Repos\\runtime\\.dotnet\\sdk\\10.0.100\\Microsoft.NETCoreSdk.BundledVersions.props"
+index 768755f..a32c0fe 100644
+--- "a/C:\\Tools\\dotnet-10.0.100\\sdk\\10.0.100\\Microsoft.NETCoreSdk.BundledVersions.props"
++++ "b/C:\\Dev\\Repos\\runtime\\.dotnet\\sdk\\10.0.100\\Microsoft.NETCoreSdk.BundledVersions.props"
+@@ -57,7 +57,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                       TargetFramework="net10.0"
+                       AppHostPackNamePattern="Microsoft.NETCore.App.Host.**RID**"
+                       AppHostPackVersion="10.0.0"
+-                      AppHostRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
++                      AppHostRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-arm;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
+                       ExcludedRuntimeIdentifiers="android"
+                       />
+ 
+@@ -65,8 +65,8 @@ Copyright (c) .NET Foundation. All rights reserved.
+                         TargetFramework="net10.0"
+                         Crossgen2PackNamePattern="Microsoft.NETCore.App.Crossgen2.**RID**"
+                         Crossgen2PackVersion="10.0.0"
+-                        Crossgen2PortableRuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+-                        Crossgen2RuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                        Crossgen2PortableRuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-arm;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                        Crossgen2RuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-arm;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+                         />
+ 
+     <KnownILCompilerPack Include="Microsoft.DotNet.ILCompiler"
+@@ -74,8 +74,8 @@ Copyright (c) .NET Foundation. All rights reserved.
+                          ILCompilerPackNamePattern="runtime.**RID**.Microsoft.DotNet.ILCompiler"
+                          ILCompilerRuntimePackNamePattern="Microsoft.NETCore.App.Runtime.NativeAOT.**RID**"
+                          ILCompilerPackVersion="10.0.0"
+-                         ILCompilerPortableRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86;linux-riscv64;linux-musl-riscv64"
+-                         ILCompilerRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86;linux-riscv64;linux-musl-riscv64"
++                         ILCompilerPortableRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-arm;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86;linux-riscv64;linux-musl-riscv64"
++                         ILCompilerRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-arm;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86;linux-riscv64;linux-musl-riscv64"
+                          />
+ 
+     <KnownRuntimePack Include="Microsoft.NETCore.App"
+@@ -83,7 +83,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                       RuntimeFrameworkName="Microsoft.NETCore.App"
+                       LatestRuntimeFrameworkVersion="10.0.0"
+                       RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.NativeAOT.**RID**"
+-                      RuntimePackRuntimeIdentifiers="ios-arm64;iossimulator-arm64;iossimulator-x64;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-arm64;maccatalyst-x64;linux-bionic-arm64;linux-bionic-x64;osx-arm64;osx-x64;freebsd-arm64;freebsd-x64;linux-x64;linux-arm;linux-arm64;linux-loongarch64;linux-bionic-arm;linux-musl-x64;linux-musl-arm;linux-musl-arm64;linux-musl-loongarch64;win-x64;win-x86;win-arm64;browser-wasm;wasi-wasm;linux-riscv64;linux-musl-riscv64;android-arm64;android-x64"
++                      RuntimePackRuntimeIdentifiers="ios-arm64;iossimulator-arm64;iossimulator-x64;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-arm64;maccatalyst-x64;linux-bionic-arm64;linux-bionic-x64;osx-arm64;osx-x64;freebsd-arm64;freebsd-x64;linux-x64;linux-arm;linux-arm64;linux-loongarch64;linux-bionic-arm;linux-musl-x64;linux-musl-arm;linux-musl-arm64;linux-musl-loongarch64;win-x64;win-x86;win-arm64;win-arm;browser-wasm;wasi-wasm;linux-riscv64;linux-musl-riscv64;android-arm64;android-x64"
+                       RuntimePackLabels="NativeAOT"
+                       />
+ 
+@@ -104,7 +104,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                       RuntimeFrameworkName="Microsoft.NETCore.App"
+                       LatestRuntimeFrameworkVersion="10.0.0"
+                       RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.Mono.**RID**"
+-                      RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;win-arm64;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;browser-wasm;ios-arm64;ios-arm;iossimulator-arm64;iossimulator-x64;iossimulator-x86;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-x64;maccatalyst-arm64;android-arm64;android-arm;android-x64;android-x86;freebsd-x64;freebsd-arm64;wasi-wasm;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                      RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;win-arm64;win-arm;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;browser-wasm;ios-arm64;ios-arm;iossimulator-arm64;iossimulator-x64;iossimulator-x86;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-x64;maccatalyst-arm64;android-arm64;android-arm;android-x64;android-x86;freebsd-x64;freebsd-arm64;wasi-wasm;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+                       RuntimePackLabels="Mono"
+                       />
+ 
+@@ -116,7 +116,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="10.0.0"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               />
+ 
+@@ -128,7 +128,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="10.0.0"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               Profile="WPF"
+                               />
+@@ -141,7 +141,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="10.0.0"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               Profile="WindowsForms"
+                               />
+@@ -154,7 +154,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.AspNetCore.App.Ref"
+                               TargetingPackVersion="10.0.0"
+                               RuntimePackNamePatterns="Microsoft.AspNetCore.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;osx-x64;linux-musl-x64;linux-musl-arm64;linux-x64;linux-arm;linux-arm64;linux-musl-arm;win-arm64;osx-arm64;linux-s390x;linux-loongarch64;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;osx-x64;linux-musl-x64;linux-musl-arm64;linux-x64;linux-arm;linux-arm64;linux-musl-arm;win-arm64;win-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+                               RuntimePackExcludedRuntimeIdentifiers="android;linux-bionic"
+                               />
+ 
+@@ -167,14 +167,14 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.NETCore.App.Ref"
+                               TargetingPackVersion="9.0.11"
+                               RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
++                              RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-arm;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
+                               />
+ 
+     <KnownAppHostPack Include="Microsoft.NETCore.App"
+                       TargetFramework="net9.0"
+                       AppHostPackNamePattern="Microsoft.NETCore.App.Host.**RID**"
+                       AppHostPackVersion="9.0.11"
+-                      AppHostRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
++                      AppHostRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;tizen.4.0.0-armel;tizen.5.0.0-armel;win-arm64;win-arm;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;linux-bionic-arm;linux-bionic-arm64;linux-bionic-x64;linux-bionic-x86;linux-ppc64le;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-musl-loongarch64"
+                       ExcludedRuntimeIdentifiers="android"
+                       />
+ 
+@@ -182,14 +182,14 @@ Copyright (c) .NET Foundation. All rights reserved.
+                         TargetFramework="net9.0"
+                         Crossgen2PackNamePattern="Microsoft.NETCore.App.Crossgen2.**RID**"
+                         Crossgen2PackVersion="9.0.11"
+-                        Crossgen2RuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                        Crossgen2RuntimeIdentifiers="linux-musl-x64;linux-x64;win-x64;linux-arm;linux-arm64;linux-musl-arm;linux-musl-arm64;osx-arm64;osx-x64;win-arm64;win-arm;win-x86;freebsd-x64;freebsd-arm64;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+                         />
+ 
+     <KnownILCompilerPack Include="Microsoft.DotNet.ILCompiler"
+                          TargetFramework="net9.0"
+                          ILCompilerPackNamePattern="runtime.**RID**.Microsoft.DotNet.ILCompiler"
+                          ILCompilerPackVersion="9.0.11"
+-                         ILCompilerRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86"
++                         ILCompilerRuntimeIdentifiers="linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;win-arm64;win-arm;win-x64;osx-x64;osx-arm64;freebsd-x64;freebsd-arm64;linux-arm;linux-musl-arm;linux-loongarch64;linux-musl-loongarch64;win-x86"
+                          />
+ 
+     <KnownRuntimePack Include="Microsoft.NETCore.App"
+@@ -197,7 +197,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                       RuntimeFrameworkName="Microsoft.NETCore.App"
+                       LatestRuntimeFrameworkVersion="9.0.11"
+                       RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.NativeAOT.**RID**"
+-                      RuntimePackRuntimeIdentifiers="ios-arm64;iossimulator-arm64;iossimulator-x64;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-arm64;maccatalyst-x64;linux-bionic-arm64;linux-bionic-x64;osx-arm64;osx-x64;freebsd-arm64;freebsd-x64;linux-x64;linux-arm;linux-arm64;linux-loongarch64;linux-bionic-arm;linux-musl-x64;linux-musl-arm;linux-musl-arm64;linux-musl-loongarch64;win-x64;win-x86;win-arm64;browser-wasm;wasi-wasm"
++                      RuntimePackRuntimeIdentifiers="ios-arm64;iossimulator-arm64;iossimulator-x64;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-arm64;maccatalyst-x64;linux-bionic-arm64;linux-bionic-x64;osx-arm64;osx-x64;freebsd-arm64;freebsd-x64;linux-x64;linux-arm;linux-arm64;linux-loongarch64;linux-bionic-arm;linux-musl-x64;linux-musl-arm;linux-musl-arm64;linux-musl-loongarch64;win-x64;win-x86;win-arm64;win-arm;browser-wasm;wasi-wasm"
+                       RuntimePackLabels="NativeAOT"
+                       />
+ 
+@@ -214,7 +214,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                       RuntimeFrameworkName="Microsoft.NETCore.App"
+                       LatestRuntimeFrameworkVersion="9.0.11"
+                       RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.Mono.**RID**"
+-                      RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;win-arm64;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;browser-wasm;ios-arm64;ios-arm;iossimulator-arm64;iossimulator-x64;iossimulator-x86;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-x64;maccatalyst-arm64;android-arm64;android-arm;android-x64;android-x86;freebsd-x64;freebsd-arm64;wasi-wasm;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
++                      RuntimePackRuntimeIdentifiers="linux-arm;linux-arm64;linux-musl-arm64;linux-musl-x64;linux-x64;osx-x64;win-arm64;win-arm;win-x64;win-x86;linux-musl-arm;osx-arm64;linux-s390x;linux-loongarch64;browser-wasm;ios-arm64;ios-arm;iossimulator-arm64;iossimulator-x64;iossimulator-x86;tvos-arm64;tvossimulator-arm64;tvossimulator-x64;maccatalyst-x64;maccatalyst-arm64;android-arm64;android-arm;android-x64;android-x86;freebsd-x64;freebsd-arm64;wasi-wasm;linux-riscv64;linux-musl-riscv64;linux-loongarch64;linux-musl-loongarch64"
+                       RuntimePackLabels="Mono"
+                       />
+ 
+@@ -226,7 +226,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="9.0.11"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               />
+ 
+@@ -238,7 +238,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="9.0.11"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               Profile="WPF"
+                               />
+@@ -251,7 +251,7 @@ Copyright (c) .NET Foundation. All rights reserved.
+                               TargetingPackName="Microsoft.WindowsDesktop.App.Ref"
+                               TargetingPackVersion="9.0.11"
+                               RuntimePackNamePatterns="Microsoft.WindowsDesktop.App.Runtime.**RID**"
+-                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64"
++                              RuntimePackRuntimeIdentifiers="win-x64;win-x86;win-arm64;win-arm"
+                               IsWindowsOnly="true"
+                               Profile="WindowsForms"
+                               />

@@ -83,17 +83,17 @@ void PalAttachThread(void* thread)
 
 static HMODULE LoadKernel32dll()
 {
-    return LoadLibraryExW(L"kernel32", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    return LoadLibraryExW(L"kernel32", NULL, NULL);
 }
 
 static HMODULE LoadKernelBasedll()
 {
-    return LoadLibraryExW(L"kernelbase", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    return LoadLibraryExW(L"kernelbase", NULL, NULL);
 }
 
 static HMODULE LoadNtdlldll()
 {
-    return LoadLibraryExW(L"ntdll.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+    return LoadLibraryExW(L"ntdll.dll", NULL, NULL);
 }
 
 void InitializeCurrentProcessCpuCount()

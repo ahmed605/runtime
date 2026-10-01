@@ -1,57 +1,73 @@
 ; Licensed to the .NET Foundation under one or more agreements.
 ; The .NET Foundation licenses this file to you under the MIT license.
 
-#include <AsmMacros.h>
+#include "ksarm.h"
+#include "asmconstants.h"
+#include "asmmacros.h"
+
+    IMPORT RhpNewObject
+    IMPORT RhpGcAllocMaybeFrozen
+    IMPORT RhExceptionHandling_FailedAllocation_Helper
+
+    TEXTAREA
 
 ;
 ; Object* RhpNew(MethodTable *pMT)
 ;
-; Allocate non-array object, slow path
+; Allocate non-array object, slow path.
 ;
-LEAF_ENTRY RhpNew, _TEXT
+    LEAF_ENTRY RhpNew
+
         mov         r1, #0
-        b           C_FUNC(RhpNewObject)
-LEAF_END RhpNew, _TEXT
+        b           RhpNewObject
+
+    LEAF_END
 
 ;
 ; Object* RhpNewMaybeFrozen(MethodTable *pMT)
 ;
-; Allocate non-array object, may be on frozen heap
+; Allocate non-array object, may be on frozen heap.
 ;
-NESTED_ENTRY RhpNewMaybeFrozen, _TEXT, NoHandler
+    NESTED_ENTRY RhpNewMaybeFrozen
+
         PUSH_COOP_PINVOKE_FRAME r2
 
         mov         r1, #0
-        bl          C_FUNC(RhpGcAllocMaybeFrozen)
+        bl          RhpGcAllocMaybeFrozen
 
         POP_COOP_PINVOKE_FRAME
-        bx          lr
-NESTED_END RhpNewMaybeFrozen, _TEXT
+        EPILOG_BRANCH_REG lr
+
+    NESTED_END
 
 ;
 ; Object* RhpNewArrayMaybeFrozen(MethodTable *pMT, INT_PTR size)
 ;
-; Allocate array object, may be on frozen heap
+; Allocate array object, may be on frozen heap.
 ;
-NESTED_ENTRY RhpNewArrayMaybeFrozen, _TEXT, NoHandler
+    NESTED_ENTRY RhpNewArrayMaybeFrozen
+
         PUSH_COOP_PINVOKE_FRAME r2
 
-        bl          C_FUNC(RhpGcAllocMaybeFrozen)
+        bl          RhpGcAllocMaybeFrozen
 
         POP_COOP_PINVOKE_FRAME
-        bx          lr
-NESTED_END RhpNewArrayMaybeFrozen, _TEXT
+        EPILOG_BRANCH_REG lr
+
+    NESTED_END
 
 ;
 ; void RhExceptionHandling_FailedAllocation(MethodTable *pMT, bool isOverflow)
 ;
-NESTED_ENTRY RhExceptionHandling_FailedAllocation, _TEXT, NoHandler
+    NESTED_ENTRY RhExceptionHandling_FailedAllocation
+
         PUSH_COOP_PINVOKE_FRAME r2
-    
-        bl          C_FUNC(RhExceptionHandling_FailedAllocation_Helper)
+
+        bl          RhExceptionHandling_FailedAllocation_Helper
 
         POP_COOP_PINVOKE_FRAME
-        bx          lr
-NESTED_END RhExceptionHandling_FailedAllocation, _TEXT
+        EPILOG_BRANCH_REG lr
 
-        END
+    NESTED_END RhExceptionHandling_FailedAllocation
+
+    END

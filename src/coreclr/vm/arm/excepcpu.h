@@ -27,6 +27,7 @@ class FaultingExceptionFrame;
 // RedirectedHandledJITCaseForXXX_Stub's.
 //
 PTR_CONTEXT GetCONTEXTFromRedirectedStubStackFrame(T_CONTEXT * pContext);
+PTR_CONTEXT GetCONTEXTFromRedirectedStubStackFrame(DISPATCHER_CONTEXT* pDispatcherContext);
 
 inline
 PCODE GetAdjustedCallAddress(PCODE returnAddress)
@@ -38,5 +39,13 @@ PCODE GetAdjustedCallAddress(PCODE returnAddress)
 }
 
 BOOL AdjustContextForVirtualStub(EXCEPTION_RECORD *pExceptionRecord, T_CONTEXT *pContext);
+
+#ifdef TARGET_WINDOWS
+//
+// Retrieves the FaultingExceptionFrame* from the stack frame of
+// RedirectForThreadAbort.
+//
+FaultingExceptionFrame *GetFrameFromRedirectedStubStackFrame (T_DISPATCHER_CONTEXT *pDispatcherContext);
+#endif // TARGET_WINDOWS
 
 #endif // __excepcpu_h__

@@ -1,44 +1,54 @@
-; Licensed to the . NET Foundation under one or more agreements. 
-; The .NET Foundation licenses this file to you under the MIT license. 
+; Licensed to the .NET Foundation under one or more agreements.
+; The .NET Foundation licenses this file to you under the MIT license.
 
-#include <AsmMacros.h>
+#include "ksarm.h"
+
+#include "asmconstants.h"
+
+#include "asmmacros.h"
+
+    IMPORT HijackHandler
+    IMPORT ThrowControlForThread
 
 ;
-; WARNING!!   These functions immediately ruin thread unwindability.   This is
+; WARNING!!  These functions immediately ruin thread unwindability.  This is
 ; WARNING!!  OK as long as there is a mechanism for saving the thread context
 ; WARNING!!  prior to running these functions as well as a mechanism for
-; WARNING!!  restoring the context prior to any stackwalk.   This means that
+; WARNING!!  restoring the context prior to any stackwalk.  This means that
 ; WARNING!!  we need to ensure that no GC can occur while the stack is
 ; WARNING!!  unwalkable.  This further means that we cannot allow any exception
 ; WARNING!!  to occur when the stack is unwalkable
 ;
 
-        ; alignment padding
-OFFSET_OF_FRAME EQU 0
+        TEXTAREA
 
-    MACRO
-    GenerateRedirectedStubWithFrame $STUB, $TARGET
+        ; scratch area
+        GBLA OFFSET_OF_FRAME
+
+        ; alignment padding
+OFFSET_OF_FRAME SETA 0
+
+        MACRO
+        GenerateRedirectedStubWithFrame $STUB, $TARGET
 
         ;
         ; This is the primary function to which execution will be redirected to.
         ;
-        NESTED_ENTRY $STUB, _TEXT, NoHandler
+        NESTED_ENTRY $STUB
 
         ;
-        ; IN:  lr:  original IP before redirect
+        ; IN: lr: original IP before redirect
         ;
 
-        PROLOG_PUSH  {r4,r7,lr}
-        alloc_stack  OFFSET_OF_FRAME + SIZEOF__FaultingExceptionFrame
+        PROLOG_PUSH         {r4,r7,lr}
+        PROLOG_STACK_ALLOC  OFFSET_OF_FRAME + SIZEOF__FaultingExceptionFrame
 
         ; At this point, the stack maybe misaligned if the thread abort was asynchronously
-        ; triggered in the prolog or epilog of the managed method.  For such a case, we must
+        ; triggered in the prolog or epilog of the managed method. For such a case, we must
         ; align the stack before calling into the VM.
         ;
-        ; Runtime check for 8-byte alignment. 
+        ; Runtime check for 8-byte alignment.
         PROLOG_STACK_SAVE r7
-        ; We lose stack unwindability here by configuring fp(r7) incorrectely
-        ; here.
         and r0, r7, #4
         sub sp, sp, r0
 
@@ -55,48 +65,47 @@ OFFSET_OF_FRAME EQU 0
         ; stack must be 8 byte aligned
         CHECK_STACK_ALIGNMENT
 
-        bl            C_FUNC($TARGET)
+        bl            $TARGET
 
         ; Target should not return.
         EMIT_BREAKPOINT
 
-        NESTED_END $STUB, _TEXT
+        NESTED_END $STUB
 
-    MEND
+        MEND
 
 ; ------------------------------------------------------------------
 ;
 ; Helpers for ThreadAbort exceptions
 ;
 
-        NESTED_ENTRY RedirectForThreadAbort2, _TEXT, NoHandler
-        PROLOG_PUSH  {r7, lr}
+        NESTED_ENTRY RedirectForThreadAbort2,,HijackHandler
+        PROLOG_PUSH         {r7, lr}
 
         ; stack must be 8 byte aligned
         CHECK_STACK_ALIGNMENT
 
         ; On entry:
         ;
-        ; r0 = address of FaultingExceptionFrame
+        ; R0 = address of FaultingExceptionFrame
         ;
         ; Invoke the helper to setup the FaultingExceptionFrame and raise the exception
-        bl              C_FUNC(ThrowControlForThread)
+        bl              ThrowControlForThread
 
-        ; ThrowControlForThread doesn't return. 
+        ; ThrowControlForThread doesn't return.
         EMIT_BREAKPOINT
 
-        NESTED_END RedirectForThreadAbort2, _TEXT
+        NESTED_END RedirectForThreadAbort2
 
-GenerateRedirectedStubWithFrame RedirectForThreadAbort, RedirectForThreadAbort2
+        GenerateRedirectedStubWithFrame RedirectForThreadAbort, RedirectForThreadAbort2
 
 ; ------------------------------------------------------------------
 
         ; This helper enables us to call into a funclet after applying the non-volatiles
-        NESTED_ENTRY CallEHFunclet, _TEXT, NoHandler
+        NESTED_ENTRY CallEHFunclet
 
-        PROLOG_PUSH  {r4-r11, lr}
-        PROLOG_STACK_SAVE_OFFSET  r7, #12
-        alloc_stack  4
+        PROLOG_PUSH         {r4-r11, lr}
+        PROLOG_STACK_ALLOC  4
 
         ; On entry:
         ;
@@ -109,22 +118,20 @@ GenerateRedirectedStubWithFrame RedirectForThreadAbort, RedirectForThreadAbort2
         str sp, [r3]
         ; apply the non-volatiles corresponding to the CrawlFrame
         add r2, r2, #OFFSETOF__CONTEXT__R4
-        ldm r2!, {r4-r6}
-        add r2, r2, #4
-        ldm r2!, {r8-r11}
+        ldm r2, {r4-r11}
         ; Invoke the funclet
         blx r1
 
-        free_stack   4
-        EPILOG_POP   {r4-r11, pc}
+        EPILOG_STACK_FREE   4
+        EPILOG_POP          {r4-r11, pc}
 
-        NESTED_END CallEHFunclet, _TEXT
+        NESTED_END CallEHFunclet
 
-        ; This helper enables us to call into a filter funclet by passing it the CallerSP to lookup the
-        ; frame pointer for accessing the locals in the parent method.
-        NESTED_ENTRY CallEHFilterFunclet, _TEXT, NoHandler
+        ; This helper enables us to call into a filter funclet by passing it the frame pointer of the
+        ; main method for accessing the locals in the parent method.
+        NESTED_ENTRY CallEHFilterFunclet
 
-        PROLOG_PUSH  {r11, lr}
+        PROLOG_PUSH         {r11, lr}
 
         ; On entry:
         ;
@@ -140,8 +147,7 @@ GenerateRedirectedStubWithFrame RedirectForThreadAbort, RedirectForThreadAbort2
         ; Invoke the filter funclet
         blx r2
 
-        EPILOG_POP   {r11, pc}
+        EPILOG_POP          {r11, pc}
 
-        NESTED_END CallEHFilterFunclet, _TEXT
-
+        NESTED_END CallEHFilterFunclet
         END

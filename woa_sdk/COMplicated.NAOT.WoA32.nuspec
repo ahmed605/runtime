@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>COMplicated.NAOT.WoA32</id>
+    <version>1.0.1</version>
+    <authors>Ahmed605</authors>
+    <description>Enables PublishAot for win-arm.</description>
+    <packageTypes><packageType name="MSBuildSDK"/></packageTypes>
+  </metadata>
+  <files>
+    <file src="Sdk\**" target="Sdk"/>
+    <file src="lld-link.exe" target="tools\lld-link.exe"/>
+  </files>
+</package>

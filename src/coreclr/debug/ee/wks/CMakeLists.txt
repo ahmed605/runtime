@@ -1,4 +1,4 @@
-if (CLR_CMAKE_TARGET_WIN32 AND NOT CLR_CMAKE_HOST_ARCH_ARM)
+if (CLR_CMAKE_TARGET_WIN32)
   list(APPEND CORDBEE_SOURCES_WKS ${CORDBEE_HEADERS_WKS})
 
   get_include_directories(ASM_INCLUDE_DIRECTORIES)
@@ -40,7 +40,7 @@ else ()
       ../${ARCH_SOURCES_DIR}/dbghelpers.${ASM_SUFFIX}
   )
 
-endif (CLR_CMAKE_TARGET_WIN32 AND NOT CLR_CMAKE_HOST_ARCH_ARM)
+endif (CLR_CMAKE_TARGET_WIN32)
 
 target_precompile_headers(cordbee_wks PRIVATE [["stdafx.h"]])
 add_dependencies(cordbee_wks eventing_headers)

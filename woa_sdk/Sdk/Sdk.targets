@@ -1,0 +1,52 @@
+<Project>
+  <Target Name="_NativeAotArmntKnownPacks"
+          BeforeTargets="ProcessFrameworkReferences"
+          Condition="'$(RuntimeIdentifier)' == 'win-arm'">
+		  
+	  <PropertyGroup>
+	    <UseRidGraph>true</UseRidGraph>
+	    <EnableSourceLink>false</EnableSourceLink>
+		<_NativeAotArmntBaseTfm>net$(TargetFrameworkVersion.TrimStart('vV'))</_NativeAotArmntBaseTfm>
+	  </PropertyGroup>
+  
+	  <ItemGroup>
+	    <KnownFrameworkReference
+		    Condition="'%(KnownFrameworkReference.Identity)' == 'Microsoft.NETCore.App'
+			  		   and '%(KnownFrameworkReference.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'
+					   and !$([System.String]::new(';%(KnownFrameworkReference.RuntimePackRuntimeIdentifiers);').Contains(';win-arm;'))"
+		    RuntimePackRuntimeIdentifiers="%(KnownFrameworkReference.RuntimePackRuntimeIdentifiers);win-arm" />
+			
+		<KnownFrameworkReference
+			Condition="'%(KnownFrameworkReference.Identity)' == 'Microsoft.NETCore.App'
+					   and '%(KnownFrameworkReference.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'"
+			RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.win-x64" />
+		  
+		<KnownRuntimePack
+			Condition="'%(KnownRuntimePack.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'
+					   and '%(KnownRuntimePack.RuntimePackLabels)' == 'NativeAOT'"
+			RuntimePackRuntimeIdentifiers="%(KnownRuntimePack.RuntimePackRuntimeIdentifiers);win-arm"
+			LatestRuntimeFrameworkVersion="$(NativeAotPackagesVersion)" />
+
+		<KnownILCompilerPack
+			Condition="'%(KnownILCompilerPack.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'"
+			ILCompilerRuntimeIdentifiers="%(KnownILCompilerPack.ILCompilerRuntimeIdentifiers);win-arm"
+			ILCompilerPortableRuntimeIdentifiers="%(KnownILCompilerPack.ILCompilerPortableRuntimeIdentifiers);win-arm"
+			ILCompilerPackVersion="$(NativeAotPackagesVersion)" />
+
+		<KnownAppHostPack
+			Condition="'%(KnownAppHostPack.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'"
+			AppHostRuntimeIdentifiers="%(KnownAppHostPack.AppHostRuntimeIdentifiers);win-arm"
+			AppHostPackVersion="$(NativeAotPackagesVersion)" />
+	  </ItemGroup>
+  </Target>
+  
+  <Target Name="_NativeAotArmntLinker"
+          AfterTargets="SetupOSSpecificProps"
+          BeforeTargets="LinkNative"
+          Condition="'$(RuntimeIdentifier)' == 'win-arm'">
+	  
+	  <PropertyGroup>
+	    <CppLinker>$(MSBuildThisFileDirectory)..\tools\lld-link.exe</CppLinker>
+	  </PropertyGroup>
+  </Target>
+</Project>

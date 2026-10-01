@@ -1468,6 +1468,44 @@ VOID ResetCurrentContext()
 }
 #endif // !DACCESS_COMPILE
 
+#ifdef FEATURE_COMINTEROP
+void emitCOMStubCall (ComCallMethodDesc *pCOMMethodRX, ComCallMethodDesc *pCOMMethodRW, PCODE target)
+{
+    WRAPPER_NO_CONTRACT;
+
+    // mov r12, pc
+    // ldr pc, [pc, #0]
+    // dcd 0
+    // dcd target
+    WORD rgCode[] = {
+        0x46fc,
+        0xf8df, 0xf004
+    };
+
+    BYTE *pBufferRX = (BYTE*)pCOMMethodRX - COMMETHOD_CALL_PRESTUB_SIZE;
+    BYTE *pBufferRW = (BYTE*)pCOMMethodRW - COMMETHOD_CALL_PRESTUB_SIZE;
+
+    memcpy(pBufferRW, rgCode, sizeof(rgCode));
+    *((PCODE*)(pBufferRW + sizeof(rgCode) + 2)) = target;
+
+    // Ensure that the updated instructions get actually written
+    ClrFlushInstructionCache(pBufferRX, COMMETHOD_CALL_PRESTUB_SIZE);
+
+    _ASSERTE(IS_ALIGNED(pBufferRX + COMMETHOD_CALL_PRESTUB_ADDRESS_OFFSET, sizeof(void*)) &&
+             *((PCODE*)(pBufferRX + COMMETHOD_CALL_PRESTUB_ADDRESS_OFFSET)) == target);
+}
+#endif // FEATURE_COMINTEROP
+
+#if !defined(DACCESS_COMPILE)
+#ifdef TARGET_WINDOWS
+FaultingExceptionFrame *GetFrameFromRedirectedStubStackFrame (DISPATCHER_CONTEXT *pDispatcherContext)
+{
+    LIMITED_METHOD_CONTRACT;
+
+    return (FaultingExceptionFrame*)((TADDR)pDispatcherContext->ContextRecord->R4);
+}
+#endif // TARGET_WINDOWS
+#endif // !defined(DACCESS_COMPILE)
 
 void MovRegImm(BYTE* p, int reg, TADDR imm)
 {

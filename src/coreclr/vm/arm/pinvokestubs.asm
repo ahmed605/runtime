@@ -1,21 +1,52 @@
-; Licensed to the . NET Foundation under one or more agreements. 
-; The .NET Foundation licenses this file to you under the MIT license. 
+; Licensed to the .NET Foundation under one or more agreements.
+; The .NET Foundation licenses this file to you under the MIT license.
 
-#include <AsmMacros.h>
+#include "ksarm.h"
+
+#include "asmconstants.h"
+
+#include "asmmacros.h"
+
+
+    IMPORT VarargPInvokeStubWorker
+    IMPORT GenericPInvokeCalliStubWorker
+    IMPORT JIT_PInvokeEndRarePath
+
+    IMPORT g_TrapReturningThreads
 
 ; ------------------------------------------------------------------
-; Macro to generate PInvoke Stubs. 
-; Params :-
-; $__PInvokeStubFuncName :  function which calls the actual stub obtained from VASigCookie
+; Macro to generate PInvoke Stubs.
+; $__PInvokeStubFuncName : function which calls the actual stub obtained from VASigCookie
 ; $__PInvokeGenStubFuncName : function which generates the IL stubs for PInvoke
-; $__PInvokeStubWorkerName : prefix of the function name for the stub
+;
+; Params :-
+; $FuncPrefix : prefix of the function name for the stub
+;                     Eg. VarargPinvoke, GenericPInvokeCalli
 ; $VASigCookieReg : register which contains the VASigCookie
-; $SaveFPArgs : "1" or "0" .  For varidic functions FP Args are not present in FP regs
+; $SaveFPArgs : "Yes" or "No" . For varidic functions FP Args are not present in FP regs
 ;                        So need not save FP Args registers for vararg Pinvoke
-    MACRO
-    PINVOKE_STUB $__PInvokeStubFuncName,$__PInvokeGenStubFuncName,$__PInvokeStubWorkerName,$VASigCookieReg,$SaveFPArgs
+        MACRO
 
-    NESTED_ENTRY $__PInvokeStubFuncName, _TEXT, NoHandler
+        PINVOKE_STUB $FuncPrefix,$VASigCookieReg,$SaveFPArgs
+
+        GBLS __PInvokeStubFuncName
+        GBLS __PInvokeGenStubFuncName
+        GBLS __PInvokeStubWorkerName
+
+        IF "$FuncPrefix" == "GenericPInvokeCalli"
+__PInvokeStubFuncName SETS "$FuncPrefix":CC:"Helper"
+        ELSE
+__PInvokeStubFuncName SETS "$FuncPrefix":CC:"Stub"
+        ENDIF
+__PInvokeGenStubFuncName SETS "$FuncPrefix":CC:"GenILStub"
+__PInvokeStubWorkerName SETS "$FuncPrefix":CC:"StubWorker"
+
+       IF "$VASigCookieReg" == "r1"
+__PInvokeStubFuncName SETS "$__PInvokeStubFuncName":CC:"_RetBuffArg"
+__PInvokeGenStubFuncName SETS "$__PInvokeGenStubFuncName":CC:"_RetBuffArg"
+        ENDIF
+
+        NESTED_ENTRY $__PInvokeStubFuncName
 
         ; save reg value before using the reg
         PROLOG_PUSH         {$VASigCookieReg}
@@ -24,29 +55,31 @@
         ldr                 $VASigCookieReg, [$VASigCookieReg,#VASigCookie__pPInvokeILStub]
 
         ; if null goto stub generation
-        cbz                 $VASigCookieReg, $__PInvokeStubFuncName. Label
+        cbz                 $VASigCookieReg, %0
 
         EPILOG_STACK_FREE   4
+
         EPILOG_BRANCH_REG   $VASigCookieReg
 
-$__PInvokeStubFuncName.Label
+0
+
         EPILOG_POP          {$VASigCookieReg}
         EPILOG_BRANCH       $__PInvokeGenStubFuncName
 
-    NESTED_END $__PInvokeStubFuncName, _TEXT
+        NESTED_END
 
 
-    NESTED_ENTRY $__PInvokeGenStubFuncName, _TEXT, NoHandler
+        NESTED_ENTRY $__PInvokeGenStubFuncName
 
         PROLOG_WITH_TRANSITION_BLOCK 0, $SaveFPArgs
 
-        ; r2 = UnmanagedTarget\\ MethodDesc
+        ; r2 = UnmanagedTarget\ MethodDesc
         mov                 r2, r12
 
         ; r1 = VaSigCookie
-    IF "$VASigCookieReg" != "r1"
+        IF "$VASigCookieReg" != "r1"
         mov                 r1, $VASigCookieReg
-    ENDIF
+        ENDIF
 
         ; r0 =  pTransitionBlock
         add                 r0, sp, #__PWTB_TransitionBlock
@@ -60,127 +93,134 @@ $__PInvokeStubFuncName.Label
         mov                 r12, r4
 
         EPILOG_WITH_TRANSITION_BLOCK_TAILCALL
+
         EPILOG_BRANCH   $__PInvokeStubFuncName
 
-    NESTED_END $__PInvokeGenStubFuncName, _TEXT
+        NESTED_END
 
-    MEND
+        MEND
+
+
+
+    TEXTAREA
+; ------------------------------------------------------------------
+; JIT_PInvokeBegin helper
+;
+; in:
+; r0 = InlinedCallFrame*
+;
+        LEAF_ENTRY JIT_PInvokeBegin
+
+            ;; r0 = pFrame
+
+            ;; set first slot to the value of InlinedCallFrame identifier (checked by runtime code)
+            mov     r1, #FRAMETYPE_InlinedCallFrame
+            str     r1, [r0]
+
+            mov     r1, 0
+            str     r1, [r0, #InlinedCallFrame__m_Datum]
+
+            str     sp, [r0, #InlinedCallFrame__m_pCallSiteSP]
+            str     r11, [r0, #InlinedCallFrame__m_pCalleeSavedFP]
+            str     lr, [r0, #InlinedCallFrame__m_pCallerReturnAddress]
+            str     r9, [r0, #InlinedCallFrame__m_pSPAfterProlog]
+
+            ;; r1 = GetThread(), TRASHES r2
+            INLINE_GETTHREAD r1, r2
+
+            str     r1, [r0, #InlinedCallFrame__m_pThread]
+
+            ;; pFrame->m_Next = pThread->m_pFrame;
+            ldr     r2, [r1, #Thread_m_pFrame]
+            str     r2, [r0, #Frame__m_Next]
+
+            ;; pThread->m_pFrame = pFrame;
+            str     r0, [r1, #Thread_m_pFrame]
+
+            ;; pThread->m_fPreemptiveGCDisabled = 0
+            mov     r2, 0
+            str     r2, [r1, #Thread_m_fPreemptiveGCDisabled]
+
+            bx      lr
+
+        LEAF_END
 
 ; ------------------------------------------------------------------
-; IN:
-; InlinedCallFrame (r0) = pointer to the InlinedCallFrame data, including the GS cookie slot (GS cookie right
-;                          before actual InlinedCallFrame data)
+; JIT_PInvokeEnd helper
 ;
+; in:
+; r0 = InlinedCallFrame*
 ;
-    NESTED_ENTRY JIT_PInvokeBegin,_TEXT,NoHandler
+        LEAF_ENTRY JIT_PInvokeEnd
 
-        PROLOG_PUSH  {r4, lr}
+            ;; r1 = GetThread(), TRASHES r2
+            INLINE_GETTHREAD r1, r2
 
-        mov     r4, r0
+            ;; r0 = pFrame
+            ;; r1 = pThread
 
-        ; r4 = pFrame
+            ;; pThread->m_fPreemptiveGCDisabled = 1
+            mov     r2, 1
+            str     r2, [r1, #Thread_m_fPreemptiveGCDisabled]
 
-        ; set first slot to the value of InlinedCallFrame identifier (checked by runtime code)
-        mov     r1, #FRAMETYPE_InlinedCallFrame
-        str     r1, [r4]
+            ;; Check return trap
+            ldr     r2, =g_TrapReturningThreads
+            ldr     r2, [r2]
+            cbnz    r2, RarePath
 
-        mov     r1, #0
-        str     r1, [r4, #InlinedCallFrame__m_Datum]
+            ;; pThread->m_pFrame = pFrame->m_Next
+            ldr     r2, [r0, #Frame__m_Next]
+            str     r2, [r1, #Thread_m_pFrame]
 
-        add     r1, sp, #8
-        str     r1, [r4, #InlinedCallFrame__m_pCallSiteSP]
-        str     r11, [r4, #InlinedCallFrame__m_pCalleeSavedFP]
-        str     lr, [r4, #InlinedCallFrame__m_pCallerReturnAddress]
-        str     r9, [r4, #InlinedCallFrame__m_pSPAfterProlog]
-
-        ; r0 = GetThread()
-        bl      C_FUNC(GetThreadHelper)
-        str     r0, [r4, #InlinedCallFrame__m_pThread]
-
-        ; pFrame->m_Next = pThread->m_pFrame;
-        ldr     r1, [r0, #Thread_m_pFrame]
-        str     r1, [r4, #Frame__m_Next]
-
-        ; pThread->m_pFrame = pFrame;
-        str     r4, [r0, #Thread_m_pFrame]
-
-        ; pThread->m_fPreemptiveGCDisabled = 0
-        mov     r1, #0
-        str     r1, [r0, #Thread_m_fPreemptiveGCDisabled]
-
-        EPILOG_POP   {r4, pc}
-
-    NESTED_END JIT_PInvokeBegin, _TEXT
-
-; ------------------------------------------------------------------
-; IN:
-; InlinedCallFrame (r0) = pointer to the InlinedCallFrame data, including the GS cookie slot (GS cookie right
-;                          before actual InlinedCallFrame data)
-;
-;
-    LEAF_ENTRY JIT_PInvokeEnd, _TEXT
-
-        ldr     r1, [r0, #InlinedCallFrame__m_pThread]
-
-        ; r0 = pFrame
-        ; r1 = pThread
-
-        ; pThread->m_fPreemptiveGCDisabled = 1
-        mov     r2, #1
-        str     r2, [r1, #Thread_m_fPreemptiveGCDisabled]
-
-        ; Check return trap
-        IMPORT g_TrapReturningThreads
-        ldr     r2, =g_TrapReturningThreads
-        ldr     r2, [r2]
-        cbnz    r2, RarePath
-
-        ; pThread->m_pFrame = pFrame->m_Next
-        ldr     r2, [r0, #Frame__m_Next]
-        str     r2, [r1, #Thread_m_pFrame]
-
-        bx      lr
+            bx      lr
 
 RarePath
-        b       C_FUNC(JIT_PInvokeEndRarePath)
+            b       JIT_PInvokeEndRarePath
 
-    LEAF_END JIT_PInvokeEnd, _TEXT
+        LEAF_END
 
 ; ------------------------------------------------------------------
-; IN:
-; InlinedCallFrame (r4) = pointer to the InlinedCallFrame data
-; OUT:
-; Thread (r5) = pointer to Thread
+; JIT_InitPInvokeFrame helper
 ;
+; in:
+; r4 = InlinedCallFrame*
+; out:
+; r5 = Thread*
 ;
-    LEAF_ENTRY JIT_InitPInvokeFrame, _TEXT
+; This helper uses a custom calling convention (see RBM_INIT_PINVOKE_FRAME_TRASH
+; in the JIT). r6 is the scratch register (REG_PINVOKE_SCRATCH).
+;
+        LEAF_ENTRY JIT_InitPInvokeFrame
 
-        PROLOG_PUSH  {r0-r4, lr}
+            ;; r5 = GetThread(), TRASHES r6
+            INLINE_GETTHREAD r5, r6
 
-        bl      C_FUNC(GetThreadHelper)
-        mov     r5, r0
+            ;; r4 = pFrame
+            ;; r5 = pThread
 
-        ; set first slot to the value of InlinedCallFrame identifier (checked by runtime code)
-        mov     r6, #FRAMETYPE_InlinedCallFrame
-        str     r6, [r4]
+            ;; set first slot to the value of InlinedCallFrame identifier (checked by runtime code)
+            mov     r6, #FRAMETYPE_InlinedCallFrame
+            str     r6, [r4]
 
-        ; pFrame->m_Next = pThread->m_pFrame;
-        ldr     r6, [r5, #Thread_m_pFrame]
-        str     r6, [r4, #Frame__m_Next]
+            ;; pFrame->m_Next = pThread->m_pFrame;
+            ldr     r6, [r5, #Thread_m_pFrame]
+            str     r6, [r4, #Frame__m_Next]
 
-        str     r11, [r4, #InlinedCallFrame__m_pCalleeSavedFP]
-        str     r9, [r4, #InlinedCallFrame__m_pSPAfterProlog]
-        mov     r6, #0
-        str     r6, [r4, #InlinedCallFrame__m_pCallerReturnAddress]
-        add     r6, sp, #24
-        str     r6, [r4, #InlinedCallFrame__m_pCallSiteSP]
+            str     r11, [r4, #InlinedCallFrame__m_pCalleeSavedFP]
+            str     r9, [r4, #InlinedCallFrame__m_pSPAfterProlog]
+            mov     r6, 0
+            str     r6, [r4, #InlinedCallFrame__m_pCallerReturnAddress]
+            str     sp, [r4, #InlinedCallFrame__m_pCallSiteSP]
 
-        ; pThread->m_pFrame = pFrame;
-        str     r4, [r5, #Thread_m_pFrame]
+            ;; pThread->m_pFrame = pFrame;
+            str     r4, [r5, #Thread_m_pFrame]
 
-        EPILOG_POP   {r0-r4, pc}
+            ;; leave current Thread in r5
+            bx      lr
 
-    LEAF_END JIT_InitPInvokeFrame, _TEXT
+        LEAF_END
+
+        INLINE_GETTHREAD_CONSTANT_POOL
 
 ; ------------------------------------------------------------------
 ; VarargPInvokeStub & VarargPInvokeGenILStub
@@ -190,7 +230,8 @@ RarePath
 ; r0 = VASigCookie*
 ; r12 = MethodDesc *
 ;
-PINVOKE_STUB VarargPInvokeStub, VarargPInvokeGenILStub, VarargPInvokeStubWorker, r0, 0
+        PINVOKE_STUB VarargPInvoke, r0, {false}
+
 
 ; ------------------------------------------------------------------
 ; GenericPInvokeCalliHelper & GenericPInvokeCalliGenILStub
@@ -200,7 +241,7 @@ PINVOKE_STUB VarargPInvokeStub, VarargPInvokeGenILStub, VarargPInvokeStubWorker,
 ; r4 = VASigCookie*
 ; r12 = Unmanaged target
 ;
-PINVOKE_STUB GenericPInvokeCalliHelper, GenericPInvokeCalliGenILStub, GenericPInvokeCalliStubWorker, r4, 1
+        PINVOKE_STUB GenericPInvokeCalli, r4, {true}
 
 ; ------------------------------------------------------------------
 ; VarargPInvokeStub_RetBuffArg & VarargPInvokeGenILStub_RetBuffArg
@@ -210,6 +251,8 @@ PINVOKE_STUB GenericPInvokeCalliHelper, GenericPInvokeCalliGenILStub, GenericPIn
 ; r1 = VASigCookie*
 ; r12 = MethodDesc*
 ;
-PINVOKE_STUB VarargPInvokeStub_RetBuffArg, VarargPInvokeGenILStub_RetBuffArg, VarargPInvokeStubWorker, r1, 0
+        PINVOKE_STUB VarargPInvoke, r1, {false}
 
+
+; Must be at very end of file
         END

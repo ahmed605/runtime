@@ -12,7 +12,7 @@ FARPROC WINAPI secureDelayHook(unsigned dliNotify, PDelayLoadInfo pdli)
     if (dliNotify == dliNotePreLoadLibrary)
     {
         // Use a safe search path to avoid delay load dll hijacking
-        return (FARPROC)::LoadLibraryExA(pdli->szDll, NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        return (FARPROC)::LoadLibraryExA(pdli->szDll, NULL, NULL);
     }
 
     return nullptr;

@@ -395,8 +395,8 @@ if %__BuildNative% EQU 1 (
     )
 
     if NOT DEFINED SkipVCEnvInit (
-        echo %__MsgPrefix%Using environment: "%__VCToolsRoot%\vcvarsall.bat" !__VCBuildArch!
-        call                                 "%__VCToolsRoot%\vcvarsall.bat" !__VCBuildArch!
+        echo %__MsgPrefix%Using environment: "%__VCToolsRoot%\vcvarsall.bat" !__VCBuildArch! 10.0.22000.0
+        call                                 "%__VCToolsRoot%\vcvarsall.bat" !__VCBuildArch! 10.0.22000.0
     )
     @if defined _echo @echo on
 

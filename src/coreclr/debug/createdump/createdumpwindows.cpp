@@ -149,7 +149,7 @@ GetTempPathWrapper(
 {
     if (g_pfnGetTempPathA == nullptr)
     {
-        HMODULE hKernel32 = LoadLibraryExW(L"kernelbase.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        HMODULE hKernel32 = LoadLibraryExW(L"kernelbase.dll", NULL, NULL);
 
         pfnGetTempPathA pLocalGetTempPathA = NULL;
         if (hKernel32 != NULL)

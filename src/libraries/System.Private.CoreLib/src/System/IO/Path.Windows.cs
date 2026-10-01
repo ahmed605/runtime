@@ -156,7 +156,7 @@ namespace System.IO
 
         private static delegate* unmanaged<int, char*, uint> GetGetTempPathWFunc()
         {
-            IntPtr kernel32 = Interop.Kernel32.LoadLibraryEx(Interop.Libraries.Kernel32, 0, Interop.Kernel32.LOAD_LIBRARY_SEARCH_SYSTEM32);
+            IntPtr kernel32 = Interop.Kernel32.LoadLibraryEx(Interop.Libraries.Kernel32, 0, 0);
 
             if (!NativeLibrary.TryGetExport(kernel32, "GetTempPath2W", out IntPtr func))
             {

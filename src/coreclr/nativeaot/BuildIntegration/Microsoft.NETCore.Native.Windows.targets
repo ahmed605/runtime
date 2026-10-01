@@ -66,6 +66,10 @@ The .NET Foundation licenses this file to you under the MIT license.
     </ItemGroup>
 
     <ItemGroup>
+      <SdkNativeLibrary Condition="'$(IlcEnableUwpCompat)' == 'true'" Include="WindowsApp.lib" />
+      <SdkNativeLibrary Condition="'$(IlcEnableUwpCompat)' == 'true'" Include="WindowsApp_downlevel.lib" />
+      <SdkNativeLibrary Condition="'$(IlcEnableUwpCompat)' == 'true'" Include="OneCoreUAP_apiset.lib" />
+      <SdkNativeLibrary Include="OneCoreUAP_downlevel.lib" />
       <SdkNativeLibrary Include="advapi32.lib" />
       <SdkNativeLibrary Include="bcrypt.lib" />
       <SdkNativeLibrary Include="crypt32.lib" />
@@ -92,6 +96,7 @@ The .NET Foundation licenses this file to you under the MIT license.
       <LinkerArg Condition="'$(NativeLib)' == 'Shared'" Include="/DLL" />
       <LinkerArg Include="@(NativeLibrary->'&quot;%(Identity)&quot;')" />
       <LinkerArg Include="@(SdkNativeLibrary->'&quot;%(Identity)&quot;')" />
+	  <LinkerArg Condition="'$(IlcEnableUwpCompat)' == 'true'" Include="/APPCONTAINER" />
       <LinkerArg Include="/NOLOGO /MANIFEST:NO" />
       <LinkerArg Condition="$(IlcMergeSections) != 'false'" Include="/MERGE:.managedcode=.text /MERGE:hydrated=.bss" />
       <LinkerArg Condition="$(NativeDebugSymbols) == 'true'" Include="/DEBUG" />
@@ -112,18 +117,27 @@ The .NET Foundation licenses this file to you under the MIT license.
       <LinkerArg Condition="'$(CETCompat)' != 'false' and '$(_targetArchitecture)' == 'x64' and '$(ControlFlowGuard)' == 'Guard'" Include="/guard:ehcont"/>
     </ItemGroup>
 
-    <ItemGroup Condition="!Exists('$(IlcSdkPath)debugucrt.txt')">
+    <ItemGroup Condition="!Exists('$(IlcSdkPath)debugucrt.txt') and '$(IlcUseDynamicCrt)' == 'true'">
       <!-- Force ucrt to be dynamically linked for release runtime -->
       <LinkerArg Include="/NODEFAULTLIB:libucrt.lib" />
       <LinkerArg Include="/DEFAULTLIB:ucrt.lib" />
+    </ItemGroup>
+	
+	<ItemGroup Condition="'$(IlcUseDynamicCrt)' != 'true'">
+      <LinkerArg Include="/NODEFAULTLIB:ucrt.lib" />
+      <LinkerArg Include="/DEFAULTLIB:libucrt.lib" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)' != 'Debug'">
       <LinkerArg Include="/OPT:REF" />
       <LinkerArg Include="/OPT:ICF" />
     </ItemGroup>
+	
+	<PropertyGroup>
+	  <IlcVCVarsTargetSDK Condition="'$(IlcVCVarsTargetSDK)' == ''">10.0.22000.0</IlcVCVarsTargetSDK>
+	</PropertyGroup>
 
-    <Exec Condition="'$(IlcUseEnvironmentalTools)' != 'true'" Command="&quot;$(MSBuildThisFileDirectory)findvcvarsall.bat&quot; $(_targetArchitecture)"
+    <Exec Condition="'$(IlcUseEnvironmentalTools)' != 'true'" Command="&quot;$(MSBuildThisFileDirectory)findvcvarsall.bat&quot; $(_targetArchitecture) $(IlcVCVarsTargetSDK)"
       IgnoreExitCode="true" ConsoleToMSBuild="true" StandardOutputImportance="Low">
       <Output TaskParameter="ConsoleOutput" PropertyName="_FindVCVarsallOutput" />
       <Output TaskParameter="ExitCode" PropertyName="_VCVarsAllFound" />
