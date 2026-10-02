@@ -1,9 +1,9 @@
 <Project>
   <PropertyGroup>
-    <NativeAotPackagesVersion Condition="'$(NativeAotPackagesVersion)' == ''">11.0.0-dev</NativeAotPackagesVersion>
+    <NativeAotPackagesVersion Condition="'$(NativeAotPackagesVersion)' == ''">11.0.0-armnt.1</NativeAotPackagesVersion>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Platform)' == 'ARM32'">
+  <PropertyGroup Condition="'$(Platform)' == 'ARM32' or '$(Platform)' == 'ARM'">
 	<UseRidGraph>true</UseRidGraph>
 	<RuntimeIdentifiers>win-arm</RuntimeIdentifiers>
 	<RuntimeIdentifier>win-arm</RuntimeIdentifier>

@@ -1,26 +1,33 @@
 <Project>
+  <PropertyGroup Condition="'$(Platform)' == 'ARM32' or '$(Platform)' == 'ARM'">
+	<UseRidGraph>true</UseRidGraph>
+	<RuntimeIdentifiers>win-arm</RuntimeIdentifiers>
+	<RuntimeIdentifier>win-arm</RuntimeIdentifier>
+  </PropertyGroup>
+
   <Target Name="_NativeAotArmntKnownPacks"
           BeforeTargets="ProcessFrameworkReferences"
           Condition="'$(RuntimeIdentifier)' == 'win-arm'">
-		  
+
 	  <PropertyGroup>
 	    <UseRidGraph>true</UseRidGraph>
 	    <EnableSourceLink>false</EnableSourceLink>
+		<RuntimeIdentifiers>win-arm</RuntimeIdentifiers>
 		<_NativeAotArmntBaseTfm>net$(TargetFrameworkVersion.TrimStart('vV'))</_NativeAotArmntBaseTfm>
 	  </PropertyGroup>
-  
+
 	  <ItemGroup>
 	    <KnownFrameworkReference
 		    Condition="'%(KnownFrameworkReference.Identity)' == 'Microsoft.NETCore.App'
 			  		   and '%(KnownFrameworkReference.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'
 					   and !$([System.String]::new(';%(KnownFrameworkReference.RuntimePackRuntimeIdentifiers);').Contains(';win-arm;'))"
 		    RuntimePackRuntimeIdentifiers="%(KnownFrameworkReference.RuntimePackRuntimeIdentifiers);win-arm" />
-			
+
 		<KnownFrameworkReference
 			Condition="'%(KnownFrameworkReference.Identity)' == 'Microsoft.NETCore.App'
 					   and '%(KnownFrameworkReference.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'"
 			RuntimePackNamePatterns="Microsoft.NETCore.App.Runtime.win-x64" />
-		  
+
 		<KnownRuntimePack
 			Condition="'%(KnownRuntimePack.TargetFramework)' == '$(_NativeAotArmntBaseTfm)'
 					   and '%(KnownRuntimePack.RuntimePackLabels)' == 'NativeAOT'"
@@ -44,9 +51,11 @@
           AfterTargets="SetupOSSpecificProps"
           BeforeTargets="LinkNative"
           Condition="'$(RuntimeIdentifier)' == 'win-arm'">
-	  
+
 	  <PropertyGroup>
-	    <CppLinker>$(MSBuildThisFileDirectory)..\tools\lld-link.exe</CppLinker>
+	    <IlcArm32Linker Condition="'$(IlcArm32Linker)' == ''">$(MSBuildThisFileDirectory)..\tools\lld-link.exe</IlcArm32Linker> 
+	    <CppLinker>$(IlcArm32Linker)</CppLinker>
+		<EnableSourceLink>false</EnableSourceLink>
 	  </PropertyGroup>
   </Target>
 </Project>
